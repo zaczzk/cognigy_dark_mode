@@ -59,3 +59,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR. The short version:
 - Never filter images.
 - Adapters must fail closed.
 - No new permissions or network access.
+
+## License
+
+[MIT](LICENSE). "Cognigy" is a trademark of its owner and is used here only to describe compatibility.
