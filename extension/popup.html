@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cognigy Graphite</title><link rel="stylesheet" href="popup.css"></head>
+<body><header><span class="mark" aria-hidden="true">G</span><div><h1>Cognigy Graphite</h1><p>Appearance</p></div></header>
+<nav class="views" aria-label="Site views"><button id="view-current" aria-pressed="true">Current site</button><button id="view-saved" aria-pressed="false">Saved sites <span id="site-count">0</span></button></nav>
+<main><section id="current-view" aria-label="Current site">
+<article class="site-card"><div class="site-heading"><span class="site-symbol" aria-hidden="true">↗</span><div class="site-identity"><h2 id="host">Connecting…</h2><p id="application-path">Cognigy application</p></div></div><span id="site-state" class="badge">Checking</span></article>
+<button id="enable-site" class="primary wide" hidden>Enable on this site</button>
+<fieldset disabled><legend>Appearance</legend><div class="modes"><label><input type="radio" name="mode" value="system"><span>System</span></label><label><input type="radio" name="mode" value="dark"><span>Dark</span></label><label><input type="radio" name="mode" value="native"><span>Original</span></label></div></fieldset>
+<p id="status" class="status" role="status" aria-live="polite">Connecting…</p><button id="reset" class="text-button" disabled>Use system default</button></section>
+<section id="saved-view" aria-label="Saved sites" hidden><div class="section-heading"><h2>Your applications</h2><button id="show-add" class="small">+ Add site</button></div>
+<form id="add-form" hidden novalidate><label for="site-address">Website address</label><input id="site-address" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="tenant.example.com">
+<details id="path-options"><summary>Application path</summary><label for="site-path">Path prefix <span class="muted">optional</span></label><input id="site-path" type="text" autocomplete="off" spellcheck="false" placeholder="/cognigy"></details>
+<p id="add-error" class="error" role="alert"></p><div class="form-actions"><button type="button" id="cancel-add" class="quiet">Cancel</button><button type="submit" id="save-site" class="primary">Add site</button></div></form>
+<div id="saved-list"></div><p id="empty-sites" class="empty" hidden>No saved sites yet.</p></section><p id="notice" role="status" aria-live="polite" hidden></p></main>
+<footer><span class="scope-dot" aria-hidden="true"></span>Cognigy UI only</footer>
+<script src="build.js"></script><script src="core.js"></script><script src="sites.js"></script><script src="site-ui.js"></script><script src="popup.js"></script></body></html>

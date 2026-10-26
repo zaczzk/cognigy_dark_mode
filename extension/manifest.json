@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Cognigy Graphite",
+  "version": "0.14.100",
+  "description": "Graphite colours for Cognigy, preserving native layout, images and depth.",
+  "minimum_chrome_version": "120",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://trial.cognigy.ai/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Cognigy Graphite"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://trial.cognigy.ai/*"
+      ],
+      "js": [
+        "sites.js",
+        "bootstrap.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "worker.js"
+  }
+}

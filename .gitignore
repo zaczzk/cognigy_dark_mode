@@ -1,0 +1,38 @@
+# Default-deny publication boundary: account captures stay local.
+/*
+!/.gitignore
+!/README.md
+!/CONTRIBUTING.md
+!/AGENTS.md
+!/CLAUDE.md
+!/docs/
+!/.github/
+# Fixture tooling (the captures it converts stay private).
+!/build-fixture.py
+!/fixture.css
+!/fixture.js
+!/extension/
+!/scripts/
+!/tests/
+/tests/*
+!/tests/extension.test.cjs
+!/tests/site-manager.test.cjs
+!/tests/browser/
+/tests/browser/*
+!/tests/browser/build.cjs
+!/tests/browser/contracts.html
+!/tests/browser/contracts.js
+!/tests/browser/runtime.js
+!/tests/browser/journeys.js
+!/tests/browser/view.js
+!/tests/browser/performance.js
+!/tests/browser/build-site-manager.cjs
+!/tests/browser/site-manager-runtime.js
+# Releases, receipts, images, native HTML/JSON captures, design previews and
+# local BMAD records remain outside this allowlist until individually reviewed.
+
+!/tests/browser/workspace-contracts.html
+!/tests/browser/workspace-contracts.js
+
+__pycache__/
+*.generated.*

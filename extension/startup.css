@@ -1,0 +1,15 @@
+/* Only the application canvas: no hiding, geometry, text or media changes. */
+@media (forced-colors: none) {
+  html[data-cg-startup="dark"],html[data-cg-startup="dark"] body,
+  html[data-cg-startup="dark"] #app-container,
+  html[data-cg-startup="dark"] #app-container > .SIDEBAR_AREA,
+  html[data-cg-startup="dark"] #app-container > div:has(> #interactionPanel) {background-color:#15191f!important}
+  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container [role="banner"]:has(a[href$="/projects"]) {background-color:#1d2229!important}
+}
+@media (prefers-color-scheme: dark) and (forced-colors: none) {
+  html[data-cg-startup="system"],html[data-cg-startup="system"] body,
+  html[data-cg-startup="system"] #app-container,
+  html[data-cg-startup="system"] #app-container > .SIDEBAR_AREA,
+  html[data-cg-startup="system"] #app-container > div:has(> #interactionPanel) {background-color:#15191f!important}
+  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container [role="banner"]:has(a[href$="/projects"]) {background-color:#1d2229!important}
+}

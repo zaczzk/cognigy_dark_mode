@@ -1,0 +1,5 @@
+#fixture-controls{position:fixed;right:15px;bottom:14px;z-index:2147483647;display:flex;gap:8px;align-items:center;background:#1D222A;color:#E6EAF0;border:1px solid #8290A4;border-radius:8px;padding:10px;font:12px system-ui}#fixture-controls button{background:#2C4264;color:#E6EAF0;border:1px solid #8290A4;border-radius:5px;padding:6px 12px;cursor:pointer}#fixture-controls output{max-width:320px}body{margin:0}
+body:has(#interactionPanel) #fixture-controls{left:72px;right:auto;max-width:660px}
+/* Pause only the offline logo carousel so two paint snapshots measure the same frame. */
+html[data-fixture-origin="https://www.cognigy.com"] #logoScrollTrack{animation-play-state:paused!important}
+html[data-fixture-origin="https://www.cognigy.com"] #fixture-controls{left:15px;flex-wrap:wrap}

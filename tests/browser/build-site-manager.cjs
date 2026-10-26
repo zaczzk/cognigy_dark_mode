@@ -1,0 +1,11 @@
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const root=path.resolve(__dirname,'../..');
+const label=process.argv[2];if(label&&!/^[a-z0-9-]+$/.test(label))throw new Error('Invalid label');
+const source=label?'releases/'+label+'/extension':'extension';
+const manifest=JSON.parse(fs.readFileSync(path.join(root,source,'manifest.json'),'utf8'));
+let html=fs.readFileSync(path.join(root,source,'popup.html'),'utf8');
+html=html.replace('<head>','<head><base href="/'+source+'/">').replace('<script src="site-ui.js">','<script>globalThis.CogGraphiteFixtureHostPermissions='+JSON.stringify(manifest.host_permissions||[])+';</script><script src="/tests/browser/site-manager-runtime.js"></script><script src="site-ui.js">');
+html=html.replace('<title>Cognigy Graphite</title>','<title>Graphite site manager — local UI preview</title>');
+html=html.replace(/(src|href)="([^"?]+\.(?:js|css))"/g,(_,attribute,file)=>attribute+'="'+file+'?v='+crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file.startsWith('/')?file.slice(1):source+'/'+file))).digest('hex').slice(0,12)+'"');
+fs.writeFileSync(path.join(__dirname,'site-manager-preview.html'),html);
+console.log('Built actual popup UI with explicit fixture-only Chrome API.');
