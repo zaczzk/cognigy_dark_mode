@@ -1,6 +1,7 @@
 # Default-deny publication boundary: account captures stay local.
 /*
 !/.gitignore
+!/.gitattributes
 !/README.md
 !/LICENSE
 !/CONTRIBUTING.md
