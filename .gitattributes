@@ -1,0 +1,5 @@
+# Release receipts hash exact bytes; keep LF on every platform.
+* text=auto eol=lf
+*.png binary
+*.zip binary
+*.woff2 binary
