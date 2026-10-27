@@ -753,7 +753,7 @@
           text(picker.parentElement);
           all(picker,'.MuiSvgIcon-root').forEach(e=>text(e,'icon'));
         }
-        if(resource==='flows')for(const button of banner.querySelectorAll('button[data-test="manage-llm-settings-button"].MuiButton-outlinedPrimary.Mui-disabled:disabled')) {
+        if(resource==='flows'||resource==='large-language-models')for(const button of banner.querySelectorAll('button[data-test="manage-llm-settings-button"].MuiButton-outlinedPrimary.Mui-disabled:disabled')) {
           const label=unique(button,':scope > .MuiButton-label');
           const icon=label&&unique(label,':scope > .MuiButton-startIcon > .MuiSvgIcon-root');
           if(label&&icon&&button.childElementCount===1&&label.childElementCount===1&&paintValue(button,'backgroundColor')==='rgb(255, 255, 255)'&&getComputedStyle(button).backgroundImage==='none'&&[button,label,icon].every(e=>paintValue(e,'color')==='rgba(0, 0, 0, 0.26)'&&!e.style.getPropertyPriority('color'))) {
@@ -948,6 +948,10 @@
           text(e);
           if(['rgba(0, 0, 0, 0.6)','rgba(37, 37, 37, 0.6)','rgb(58, 57, 74)'].includes(paintValue(e,'color')))plan(e,'data-cg-text','secondary');
         });
+        // Packaging's "not included in packages" notice is a leaf div two levels below the banner.
+        if(resource==='packaging')all(utilityPage,'[data-test="AgentPackagesHeader"] > div > div:not(:has(*))').forEach(e=>{
+          if(paintValue(e,'color')==='rgb(58, 57, 74)'&&surface(e,'panel',['rgb(227, 233, 248)']))plan(e,'data-cg-text','secondary');
+        });
         if(knowledgeDetail||endpointDetail) {
           if(knowledgeDetail)all(utilityPage,'main#mainContent a.MuiListItem-root > div > span').forEach(e=>text(e));
           if(endpointDetail)all(utilityPage,'form[aria-labelledby="endpointEditorHeader"] > div').forEach(e=>{if(LIGHT.includes(paintValue(e,'backgroundColor')))surface(e,'panel');});
@@ -1031,6 +1035,10 @@
       const dashboard=unique(app,'div#mainContent[role="main"]');
       const dashboardPage=dashboard?.parentElement;
       const dashboardBanner=dashboardPage&&unique(dashboardPage,':scope > [role="banner"][data-test="AgentDashboardHeader"]');
+      // Widgets fetch their data after the page frame mounts. While any shows its
+      // native spinner, paint only the frame, header and cards; rows, chart and
+      // period select are qualified once the data has loaded.
+      const dashLoading=!!dashboard?.querySelector('.MuiCircularProgress-root[role="progressbar"]');
       if(enabled(family)&&/^\/project\/[^/]+\/[^/]+\/?$/.test(loc.pathname)&&dashboardBanner&&dashboardPage.childElementCount===2) {
         boundaries.push([dashboardPage,family]);
         if(!surface(dashboardPage,'canvas',['rgb(249, 249, 254)'])||!surface(dashboard,'canvas',['rgb(249, 249, 254)']))rejected.add(family);
@@ -1052,7 +1060,7 @@
             paintValue(card,'boxShadow')!==cardShadow||!surface(card,'panel',['rgb(255, 255, 255)']))rejected.add(family);
           else slot(card,'dashboard-shadow');
         }
-        for(const id of ['dashboardMembersWidgetHeading','dashboardRecentWidgetHeading']) {
+        if(!dashLoading)for(const id of ['dashboardMembersWidgetHeading','dashboardRecentWidgetHeading']) {
           const rows=unique(dashboard,'ul.MuiList-root[aria-labelledby="'+id+'"]');
           if(!rows)rejected.add(family);
           else all(rows,':scope > li > a.MuiListItem-button[role="button"]').forEach(e=>{
@@ -1064,6 +1072,11 @@
         all(dashboard,'ul[aria-labelledby="dashboardGetStartedWidgetHeading"] > li > a.MuiLink-root > div > p.MuiTypography-root').forEach(e=>{
           if(paintValue(e,'color')==='rgb(116, 116, 129)')plan(e,'data-cg-text','secondary');
         });
+        // Before its data arrives the analytics card shows a static empty-state line.
+        if(dashLoading&&cards[0])all(cards[0],'p.MuiTypography-root:not(#dashboardAnalyticsWidgetHeading)').forEach(e=>{
+          if(!e.childElementCount&&paintValue(e,'color')==='rgb(58, 57, 74)')plan(e,'data-cg-text','text');
+        });
+        if(!dashLoading) {
         const analytics=cards[0];
         const plot=analytics&&unique(analytics,'.recharts-responsive-container > .recharts-wrapper');
         const svg=plot&&unique(plot,':scope > svg.recharts-surface');
@@ -1127,6 +1140,7 @@
             }
             if(selected!==1)rejected.add(family);
           }
+        }
         }
       }
       family='list';
