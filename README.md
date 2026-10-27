@@ -28,7 +28,7 @@ The extension never restyles a page blindly. On an approved Cognigy route:
 3. Only then does it tag the element with `data-cg-*` marker attributes.
 4. `application.css` paints only elements that carry those markers, using the tokens in `palette.css`.
 
-Anything unrecognised fails closed and keeps its native colours. Choosing **Original** removes every marker. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Anything unrecognised fails closed and keeps its native colours. Choosing **Original** removes every marker. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). [docs/COVERAGE.md](docs/COVERAGE.md) lists which screens have been checked, and the known gaps.
 
 ## Privacy
 
