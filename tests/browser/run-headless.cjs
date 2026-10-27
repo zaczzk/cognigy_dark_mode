@@ -24,11 +24,15 @@ async function main() {
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const origin='http://127.0.0.1:'+server.address().port;
   const profile=fs.mkdtempSync(path.join(os.tmpdir(),'cg-contracts-'));
-  const browser=spawn(chrome,['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--user-data-dir='+profile,'--window-size=1400,1000','about:blank'],{stdio:'ignore'});
+  // Hosted Linux CI runners cannot start Chrome's user-namespace sandbox.
+  const sandbox=process.env.CI&&process.platform==='linux'?['--no-sandbox']:[];
+  const browser=spawn(chrome,['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check',...sandbox,'--remote-debugging-port=0','--user-data-dir='+profile,'--window-size=1400,1000','about:blank'],{stdio:['ignore','ignore','pipe']});
+  let stderr='';browser.stderr.on('data',d=>{stderr=(stderr+d).slice(-4000);});browser.on('error',e=>{stderr+=String(e);});
   let failed=0;
   try {
     const portFile=path.join(profile,'DevToolsActivePort');
-    for(let i=0;i<100&&!fs.existsSync(portFile);i++)await sleep(100);
+    for(let i=0;i<150&&!fs.existsSync(portFile);i++)await sleep(100);
+    if(!fs.existsSync(portFile))throw new Error('Chrome did not start ('+chrome+')\n'+stderr);
     const port=fs.readFileSync(portFile,'utf8').split('\n')[0];
     const target=(await (await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(t=>t.type==='page');
     const ws=new WebSocket(target.webSocketDebuggerUrl);
