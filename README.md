@@ -48,11 +48,14 @@ Anything unrecognised fails closed and keeps its native colours. Choosing **Orig
 
 ## Contributing
 
-Unit tests run in CI. Browser contracts need DOM captures from your own Cognigy account, so they run locally only. Run the unit tests with:
+CI runs the unit tests and the browser contracts on every push and PR. To run them locally (Node 22+, plus Chrome for the contracts):
 
 ```bash
-node --test "tests/*.test.cjs"   # Node 22+
+node --test "tests/*.test.cjs"
+node tests/browser/build.cjs && node tests/browser/run-headless.cjs
 ```
+
+Checking a specific Cognigy screen needs a capture from your own account, which stays local. CONTRIBUTING explains how.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR. The short version:
 - Colours only.
