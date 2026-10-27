@@ -1395,6 +1395,8 @@
           all(summary,':scope > span,:scope > div > span').forEach(e=>{if(!e.childElementCount)text(e,'secondary');});
         });
         all(settingsForm,'.MuiListSubheader-root').forEach(e=>text(e));
+        // A configured speech provider adds a "Type: …" helper line whose text sits in a child span.
+        all(settingsForm,'.MuiFormHelperText-root:not(.Mui-error) > span').forEach(e=>{if(!e.childElementCount)text(e);});
         all(settingsForm,'#generativeAISettingsCollapsableSection .MuiSvgIcon-colorPrimary').forEach(e=>text(e,'icon'));
         all(settingsForm,'#generativeAISettingsCollapsableSection .MuiAccordionSummary-content label.MuiInputLabel-root > span > .MuiGrid-container > .MuiGrid-item').forEach(e=>{if(!e.childElementCount)text(e);});
         all(settingsForm,'.MuiInputBase-root:has(> input[id^="field-generativeAISettings."]) > span:has(> img:only-child)').forEach(e=>{
@@ -1688,6 +1690,8 @@
           if(!surface(e,'field'))rejected.add(family);
         });
         all(interaction,'.MuiSelect-icon').forEach(e=>text(e,'icon'));
+        // The empty Snapshot select renders its "No Snapshot" placeholder in a child <i>.
+        all(interactionHead,'.MuiSelect-select.MuiInputBase-input > i').forEach(e=>{if(!e.childElementCount)text(e);});
         all(interactionHead,'.MuiIconButton-label > svg ellipse').forEach(e=>{
           if(getComputedStyle(e).fill==='rgb(11, 54, 148)'&&getComputedStyle(e).stroke==='none')slot(e,'mono-fill');
         });
@@ -1700,7 +1704,16 @@
           const transcript=unique(chat,':scope > #chatContainer');
           const composer=unique(chat,':scope > .MuiPaper-root');
           const input=unique(chat,'input#interactionPanelMessageTextField.MuiInputBase-input');
-          if(!transcript||transcript.childElementCount||!composer||!input||!surface(transcript,'canvas')||!surface(composer,'panel'))rejected.add(family);
+          // Voice mode swaps the text field for one Start Call control; the tab strip and paper are identical.
+          const voice=composer&&!input&&unique(composer,'#voiceInputTab.Mui-selected')&&unique(composer,'button#startCallButton');
+          const callArea=voice&&unique(composer,':scope > div:has(#startCallButton)');
+          if(voice&&transcript&&!transcript.childElementCount&&callArea&&surface(transcript,'canvas')&&surface(composer,'panel')) {
+            if(getComputedStyle(composer).boxShadow===paperShadow)slot(composer,'interaction-paper-shadow');
+            if(!surface(callArea,'shell'))rejected.add(family);
+            all(composer,'.MuiTab-root').forEach(e=>{
+              if(surface(e,'input-mode',[TRANSPARENT,...LIGHT]))text(e,'icon');else rejected.add(family);
+            });
+          } else if(!transcript||transcript.childElementCount||!composer||!input||!surface(transcript,'canvas')||!surface(composer,'panel'))rejected.add(family);
           else {
             if(getComputedStyle(composer).boxShadow===paperShadow)slot(composer,'interaction-paper-shadow');
             const inputArea=unique(composer,':scope > div:has(#interactionPanelMessageTextField)');
