@@ -12,6 +12,7 @@ This is a Chrome Manifest V3 extension that recolours the Cognigy.AI web app dar
 |---|---|
 | Unit tests (must pass; Node 22+) | `node --test "tests/*.test.cjs"` |
 | Build browser contract pages | `node tests/browser/build.cjs` |
+| Run browser contracts headless (needs Chrome) | `node tests/browser/run-headless.cjs` |
 
 ## Invariants
 

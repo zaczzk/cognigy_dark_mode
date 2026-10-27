@@ -24,11 +24,20 @@ Thanks for helping. This project is small, but it is careful on purpose: it runs
 node --test "tests/*.test.cjs"
 ```
 
-These unit tests cover the settings contract, routing, the popup, site management and worker reconciliation. CI runs them on every push and PR.
+These unit tests cover the settings contract, routing, the popup, site management and worker reconciliation.
 
-### Browser contracts (adapter work)
+The controller and adapter contracts use DOM built by the tests themselves, so they need no captures. With Chrome installed:
 
-The contracts run the real controller and adapters against Cognigy DOM. Captures come from real accounts, so **each contributor makes their own and never commits them**.
+```bash
+node tests/browser/build.cjs
+node tests/browser/run-headless.cjs   # optional: path to Chrome, or set CHROME_PATH
+```
+
+CI runs both suites on every push and PR.
+
+### Screen captures (adapter work)
+
+To check a specific Cognigy screen, run the real controller and adapters against a capture of it. Captures come from real accounts, so **each contributor makes their own and never commits them**.
 
 1. Open the target screen in Cognigy and set the extension to **Original**.
 2. Paste the contents of `scripts/capture-native-dom.js` into the DevTools console as `copy(JSON.stringify((<pasted>)()))`. This copies the capture to your clipboard.
@@ -56,6 +65,7 @@ The capture script strips scripts, input values, iframes, video and editor text,
 ### PR checklist
 
 - [ ] `node --test "tests/*.test.cjs"` passes
+- [ ] `node tests/browser/run-headless.cjs` passes (after `node tests/browser/build.cjs`)
 - [ ] No new permissions, network calls, observers or timers
 - [ ] Original mode restores the page exactly
 - [ ] Images, avatars and editor content are untouched

@@ -14,3 +14,14 @@ jobs:
         with:
           node-version: 22
       - run: node --test "tests/*.test.cjs"
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+      - run: node tests/browser/build.cjs
+      - run: node tests/browser/run-headless.cjs "${{ steps.chrome.outputs.chrome-path }}"

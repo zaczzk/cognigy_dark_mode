@@ -1,0 +1,37 @@
+name: Screen not themed correctly
+description: Part of the Cognigy app stays light, looks wrong, or breaks with the extension on.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please do not attach captures or screenshots that show customer data, names or emails.
+  - type: input
+    id: screen
+    attributes:
+      label: Screen
+      description: Area and screen, e.g. "Authoring > Intent Trainer > filter preset menu". Leave out project IDs.
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What you see
+      description: Which element is wrong, and in which state (hover, open, selected...).
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: Shown in chrome://extensions.
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Appearance
+      options: [System, Dark, Original]
+  - type: input
+    id: chrome
+    attributes:
+      label: Chrome version

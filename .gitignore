@@ -30,6 +30,7 @@
 !/tests/browser/performance.js
 !/tests/browser/build-site-manager.cjs
 !/tests/browser/site-manager-runtime.js
+!/tests/browser/run-headless.cjs
 # Releases, receipts, images, native HTML/JSON captures, design previews and
 # local BMAD records remain outside this allowlist until individually reviewed.
 
