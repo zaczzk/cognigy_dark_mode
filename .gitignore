@@ -8,6 +8,7 @@
 !/AGENTS.md
 !/CLAUDE.md
 !/docs/
+!/docs/STATUS-2026-10-29.md
 !/.github/
 # Fixture tooling (the captures it converts stay private).
 !/build-fixture.py
