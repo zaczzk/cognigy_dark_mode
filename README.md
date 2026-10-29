@@ -1,70 +1,87 @@
-# Cognigy Dark Mode (Cognigy Graphite)
+# Cognigy Graphite
 
-A Chrome extension that gives the Cognigy.AI web app a dark "graphite" theme. It changes **colours only**. Layout, typography, images, node shapes and shadow geometry stay exactly as Cognigy draws them.
+**Dark mode for Cognigy.AI.** Colours change. Your layout, controls and media stay familiar.
 
-> Unofficial community project. Not affiliated with, endorsed by, or supported by NiCE Cognigy.
+**Preview · 0.14.100 · Chrome 120+**
 
-**Status: pre-1.0 (`0.14.x`).** Covered:
-- Most of the authoring app: flows and inspector, AI Agents, resource lists, project settings, Knowledge, Simulator, Trainer and more.
-- Admin Center, Insights and the project index.
+[Install](#install) · [Use it](#use-it) · [Troubleshooting](#troubleshooting) · [Contribute](#contribute)
 
-Any screen the extension does not recognise keeps its native light appearance. Known gaps are tracked in [Issues](https://github.com/zaczzk/cognigy_dark_mode/issues).
+## Install
 
-The current source checkpoint and its verification limits are recorded in [docs/STATUS-2026-10-29.md](docs/STATUS-2026-10-29.md). The screen list in [docs/COVERAGE.md](docs/COVERAGE.md) is a capture survey of 0.14.100, not a verification of later source changes.
+1. Download this repository: **Code → Download ZIP**. Unzip it.
+2. Open `chrome://extensions` in Chrome.
+3. Turn on **Developer mode**.
+4. Click **Load unpacked**. Select the repository's **`extension/`** folder.
+5. Open Cognigy. Click the Graphite toolbar icon.
 
-## Install (unpacked)
+**Already cloned it?** Load the same `extension/` folder.
 
-1. Clone this repo (or download a zip from [Releases](https://github.com/zaczzk/cognigy_dark_mode/releases) once one is published).
-2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and select the `extension/` folder.
-3. Open your Cognigy app and click the toolbar icon. Choose **System**, **Dark** or **Original**.
+## Use it
 
-Chrome 120 or later is required.
+| Mode | Result |
+|---|---|
+| **System** | Follows your system's light/dark preference. |
+| **Dark** | Keeps Cognigy dark. |
+| **Original** | Restores Cognigy's native colours. |
 
-`https://trial.cognigy.ai` works out of the box. For any other Cognigy host, open the popup on that site and click **Enable on this site**, or use **Saved sites → Add site**. Chrome asks for permission for that one hostname.
+**Trial:** `trial.cognigy.ai` is enabled by default.
 
-## How it works (one paragraph)
+**Another Cognigy host:** open the popup → **Enable on this site** → approve access to that hostname.
 
-The extension never restyles a page blindly. On an approved Cognigy route:
-1. Per-component **adapters** (`extension/adapters.js`) positively identify each known surface by its DOM structure.
-2. The adapter checks that the element's native colours are the ones it expects.
-3. Only then does it tag the element with `data-cg-*` marker attributes.
-4. `application.css` paints only elements that carry those markers, using the tokens in `palette.css`.
+**Saved sites:** add, pause, enable or remove hosts. An optional path prefix supports apps hosted under a subpath.
 
-Anything unrecognised fails closed and keeps its native colours. Choosing **Original** removes every marker. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). [docs/COVERAGE.md](docs/COVERAGE.md) lists which screens have been checked, and the known gaps.
+## What it covers
+
+- **Authoring:** flows, inspector, AI Agents, Knowledge, settings, Simulator, Trainer and resource lists.
+- **Admin Center** and **Insights**.
+- **Project index** and dashboard.
+
+Recognised components receive the graphite palette. Unsupported or unexpected components keep their native colours.
+
+**Still a preview.** See [checked screens and known gaps](docs/COVERAGE.md) or the [latest verification record](docs/STATUS-2026-10-29.md).
+
+## Update
+
+1. Pull or download the latest source.
+2. Open `chrome://extensions` → **Reload** Graphite.
+3. **Reload every open Cognigy tab.**
+
+Keep using the same extension folder to preserve its identity and settings.
+
+## Troubleshooting
+
+| You see… | Do this |
+|---|---|
+| **Reload this page to connect** | Reload the Cognigy tab. |
+| A light page in **System** mode | Check your system preference. Choose **Dark** for an always-dark theme. |
+| A white component in **Dark** mode | It may be unsupported. [Report the screen and interaction](https://github.com/zaczzk/cognigy_dark_mode/issues). |
+| **Partly supported** | This label alone does not mean a component failed or remains white. |
+
+Include the extension version and steps to reproduce. Keep account details and captures private.
 
 ## Privacy
 
-- **Permissions:** `storage`, `activeTab` and `scripting`, plus host access to `trial.cognigy.ai`. Other hosts are optional and granted one at a time.
-- **No network requests, remote code, analytics, polling or browsing history.**
-- **Stored locally:** only enrolled hostnames, an optional path prefix and your appearance choice. Page content, field values and record IDs are never read into storage.
+- No network requests, analytics or remote code.
+- Saves approved hostnames, optional path prefixes and appearance choices locally.
+- Never stores page content, input values or record IDs.
+- Required permissions: `storage`, `activeTab`, `scripting`, plus `trial.cognigy.ai`. Other hosts are granted individually.
 
-## Repo layout
+## Contribute
 
-| Path | What |
-|---|---|
-| `extension/` | The extension source. This folder is what you load and ship. |
-| `tests/` | Node unit tests (`*.test.cjs`) and browser contract harnesses (`tests/browser/`). |
-| `scripts/` | Packaging, dev-install staging and capture helpers. |
-| `docs/` | Architecture notes. |
-| `AGENTS.md` | Ground rules for AI coding agents working in this repo. |
-
-## Contributing
-
-CI runs the unit tests and the browser contracts on every push and PR. To run them locally (Node 22+, plus Chrome for the contracts):
+**Node 22+ and Chrome.** No npm install or bundler.
 
 ```bash
 node --test "tests/*.test.cjs"
-node tests/browser/build.cjs && node tests/browser/run-headless.cjs
+node tests/browser/build.cjs
+node tests/browser/run-headless.cjs
 ```
 
-Checking a specific Cognigy screen needs a capture from your own account, which stays local. CONTRIBUTING explains how.
+CI checks PRs and pushes to `main`.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR. The short version:
-- Colours only.
-- Never filter images.
-- Adapters must fail closed.
-- No new permissions or network access.
+**Rules:** colours only, exact Original restoration, no media filters, no new permissions or network calls. Private captures stay local.
 
-## License
+[Contributor guide](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Agent instructions](AGENTS.md)
 
-[MIT](LICENSE). "Cognigy" is a trademark of its owner and is used here only to describe compatibility.
+## License & affiliation
+
+[MIT](LICENSE). Unofficial community project, unaffiliated with NiCE Cognigy. "Cognigy" is its owner's trademark and describes compatibility.
