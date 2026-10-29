@@ -10,6 +10,8 @@ A Chrome extension that gives the Cognigy.AI web app a dark "graphite" theme. It
 
 Any screen the extension does not recognise keeps its native light appearance. Known gaps are tracked in [Issues](https://github.com/zaczzk/cognigy_dark_mode/issues).
 
+The current source checkpoint and its verification limits are recorded in [docs/STATUS-2026-10-29.md](docs/STATUS-2026-10-29.md). The screen list in [docs/COVERAGE.md](docs/COVERAGE.md) is a capture survey of 0.14.100, not a verification of later source changes.
+
 ## Install (unpacked)
 
 1. Clone this repo (or download a zip from [Releases](https://github.com/zaczzk/cognigy_dark_mode/releases) once one is published).

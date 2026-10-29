@@ -5,15 +5,6 @@
   html[data-cg-startup="dark"] #app-container > .SIDEBAR_AREA,
   html[data-cg-startup="dark"] #app-container > div:has(> #interactionPanel) {background-color:#15191f!important}
   html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container [role="banner"]:has(a[href$="/projects"]) {background-color:#1d2229!important}
-  /* Page frame and project strip mount before their data. Cover only these structural surfaces until qualification. */
-  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container #mainContent:not([data-cg-slot]),
-  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container div:has(> #mainContent):not([data-cg-slot]),
-  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container div:has(> [role="banner"][data-test]):not([data-cg-slot]),
-  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container [data-test="SimulationEditorHeader"]:not([data-cg-slot]),
-  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container > .__insights:not([data-cg-slot]){background-color:#15191f!important}
-  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container [data-test="SimulationEditorHeader"] > [role="banner"]:not([data-cg-slot]){background-color:#1d2229!important}
-  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container [role="banner"] > div:has([data-test-id="AgentBadgeDropdownButton"]):not([data-cg-slot]){background-color:#1d2229!important}
-  html[data-cg-startup="dark"]:not([data-cg-native-read]) #app-container [role="banner"] div:has(> [data-test-id="AgentBadgeDropdownButton"]):not([data-cg-slot]){background-color:#242a34!important}
 }
 @media (prefers-color-scheme: dark) and (forced-colors: none) {
   html[data-cg-startup="system"],html[data-cg-startup="system"] body,
@@ -21,12 +12,4 @@
   html[data-cg-startup="system"] #app-container > .SIDEBAR_AREA,
   html[data-cg-startup="system"] #app-container > div:has(> #interactionPanel) {background-color:#15191f!important}
   html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container [role="banner"]:has(a[href$="/projects"]) {background-color:#1d2229!important}
-  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container #mainContent:not([data-cg-slot]),
-  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container div:has(> #mainContent):not([data-cg-slot]),
-  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container div:has(> [role="banner"][data-test]):not([data-cg-slot]),
-  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container [data-test="SimulationEditorHeader"]:not([data-cg-slot]),
-  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container > .__insights:not([data-cg-slot]){background-color:#15191f!important}
-  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container [data-test="SimulationEditorHeader"] > [role="banner"]:not([data-cg-slot]){background-color:#1d2229!important}
-  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container [role="banner"] > div:has([data-test-id="AgentBadgeDropdownButton"]):not([data-cg-slot]){background-color:#1d2229!important}
-  html[data-cg-startup="system"]:not([data-cg-native-read]) #app-container [role="banner"] div:has(> [data-test-id="AgentBadgeDropdownButton"]):not([data-cg-slot]){background-color:#242a34!important}
 }

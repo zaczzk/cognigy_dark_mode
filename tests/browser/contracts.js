@@ -11,7 +11,11 @@ document.querySelector('#run').addEventListener('click',async()=>{
   const painted=el=>!!el?.matches('[data-cg-slot],[data-cg-text]')||!!el?.querySelector('[data-cg-slot],[data-cg-text]');
   const insert=html=>{inspector().querySelector('p').innerHTML=html;};
   try {
-    await reset();
+    rt.mode('native');sandbox.innerHTML='<div id="app-container"><div><div role="banner" data-test="UnknownHeader" style="background:white"></div><main id="mainContent" style="background:white;color:black">Unknown screen</main></div></div>';rt.route('/project/a/b/flows');rt.mode('dark');await wait();
+    document.documentElement.setAttribute('data-cg-startup','dark');
+    check('startup leaves rejected page frame native',getComputedStyle(document.querySelector('#mainContent')).backgroundColor==='rgb(255, 255, 255)'&&getComputedStyle(document.querySelector('[role="banner"]')).backgroundColor==='rgb(255, 255, 255)');
+    document.querySelector('#mainContent').setAttribute('data-cg-native','true');await wait();check('startup preserves native page opt-out',getComputedStyle(document.querySelector('#mainContent')).backgroundColor==='rgb(255, 255, 255)');
+    document.documentElement.removeAttribute('data-cg-startup');await reset();
     document.querySelector('#app-container').insertAdjacentHTML('beforeend','<div id="flowChartEditorTabContent"><div id="chart"><div id="chartContent" style="background:rgb(249,249,254)"><svg><path style="fill:none;stroke:rgb(234,234,234)" d="M0 0 L10 10"></path></svg></div><div id="history-toolbar" style="background:rgba(248,248,248,.85)"><span title="Undo"><button class="MuiIconButton-root" aria-label="Undo" disabled style="color:rgba(0,0,0,.26)"><svg style="fill:currentColor"><path d="M0 0 L10 10"></path></svg></button></span><span title="Redo"><button class="MuiIconButton-root" aria-label="Redo" disabled style="color:rgba(0,0,0,.26)"></button></span></div></div></div>');await wait();
     const history=document.querySelector('#history-toolbar'),undo=history.querySelector('button');
     check('history toolbar dark with disabled semantics retained',history.getAttribute('data-cg-slot')==='toolbar'&&undo.disabled&&getComputedStyle(undo).color!=='rgba(0, 0, 0, 0.26)');

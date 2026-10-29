@@ -131,7 +131,7 @@
         if(e.matches('.MuiButton-outlinedPrimary,.MuiIconButton-root')&&LIGHT.includes(bg))surface(e,'secondary-button');
       });
       all(root,'.MuiInputBase-root, .c26-legacy-cognigy-text-input-row').forEach(e=>{
-        if(family==='utility'&&e.closest('[data-test="IntentTrainerHeader"]')&&unique(e,'[role="button"][aria-haspopup="listbox"][aria-labelledby="filterPresetsId"]')&&surface(e,'primary',LINK))return;
+        if(family==='utility'&&e.closest('[data-test="IntentTrainerHeader"]')&&unique(e,'[role="button"][aria-haspopup="listbox"][aria-labelledby="filterPresetsId"]')&&surface(e,'primary',[...LINK,'rgb(6, 28, 76)']))return;
         const agentEditable=family==='agents'&&e.matches('.c26-legacy-cognigy-text-input-row')&&
           unique(e,':scope > [data-test="CognigyTextEditableField"].c26-legacy-cognigy-text-editable');
         if(agentEditable&&!surface(agentEditable,'agent-editable',[TRANSPARENT,'rgb(236, 236, 237)']))rejected.add(family);
@@ -1012,7 +1012,7 @@
             if(!surface(paper,'overlay'))rejected.add(family);
             workspaceComponents(paper);
             all(menu,':scope > .MuiMenuItem-root').forEach(option=>{
-              if(!surface(option,'overlay',[...LIGHT,TRANSPARENT,'rgba(0, 0, 0, 0.04)','rgba(0, 0, 0, 0.08)','rgba(61, 159, 255, 0.05)']))rejected.add(family);
+              if(!surface(option,'overlay',[...LIGHT,TRANSPARENT,'rgba(0, 0, 0, 0.04)','rgba(0, 0, 0, 0.08)','rgba(61, 159, 255, 0.05)',...(menu===presetList?['rgb(227, 233, 248)']:[])]))rejected.add(family);
               slot(option,'menu-item');text(option);
             });
           }
@@ -1035,20 +1035,21 @@
       const dashboard=unique(app,'div#mainContent[role="main"]');
       const dashboardPage=dashboard?.parentElement;
       const dashboardBanner=dashboardPage&&unique(dashboardPage,':scope > [role="banner"][data-test="AgentDashboardHeader"]');
-      // Widgets fetch their data after the page frame mounts. While any shows its
-      // native spinner, paint only the frame, header and cards; rows, chart and
-      // period select are qualified once the data has loaded.
-      const dashLoading=!!dashboard?.querySelector('.MuiCircularProgress-root[role="progressbar"]');
+      // Widgets settle independently. A protected or unrelated spinner must not
+      // suppress qualification of an already populated card.
+      const cardLoading=card=>!!card?.children[1]&&all(card.children[1],'.MuiCircularProgress-root[role="progressbar"]').length>0;
       if(enabled(family)&&/^\/project\/[^/]+\/[^/]+\/?$/.test(loc.pathname)&&dashboardBanner&&dashboardPage.childElementCount===2) {
         boundaries.push([dashboardPage,family]);
         if(!surface(dashboardPage,'canvas',['rgb(249, 249, 254)'])||!surface(dashboard,'canvas',['rgb(249, 249, 254)']))rejected.add(family);
         if(!surface(dashboardBanner,'canvas',[TRANSPARENT]))rejected.add(family);
         controls(dashboardPage);
-        const strip=unique(dashboardBanner,':scope > div:has([data-test-id="AgentBadgeDropdownButton"])');
+        // The native project picker mounts after this exact empty header strip.
+        const pendingStrip=dashboardBanner.childElementCount===3&&unique(dashboardBanner,':scope > div:nth-child(2) > a[href$="#complementaryApplicationMenu"]')&&unique(dashboardBanner,':scope > div:nth-child(3) > div > h1#genericHeaderId')?unique(dashboardBanner,':scope > div:first-child:empty'):null;
+        const strip=unique(dashboardBanner,':scope > div:has([data-test-id="AgentBadgeDropdownButton"])')||pendingStrip;
         if(!surface(strip,'shell'))rejected.add(family);
         const picker=strip?.querySelector('[data-test-id="AgentBadgeDropdownButton"]');
-        if(!picker||!surface(picker.parentElement,'panel'))rejected.add(family);
-        else text(picker.parentElement);
+        if(picker) {if(!surface(picker.parentElement,'panel'))rejected.add(family);else text(picker.parentElement);}
+        else if(!pendingStrip)rejected.add(family);
         all(dashboardPage,'.MuiSvgIcon-root').forEach(e=>{text(e,'icon');monoPaths(e,[...TEXT,...SECONDARY,...LINK,'none']);});
         all(dashboardPage,'.sr-only').forEach(e=>text(e));
         const headings=['dashboardAnalyticsWidgetHeading','dashboardGetStartedWidgetHeading','dashboardMembersWidgetHeading','dashboardRecentWidgetHeading'];
@@ -1060,10 +1061,10 @@
             paintValue(card,'boxShadow')!==cardShadow||!surface(card,'panel',['rgb(255, 255, 255)']))rejected.add(family);
           else slot(card,'dashboard-shadow');
         }
-        if(!dashLoading)for(const id of ['dashboardMembersWidgetHeading','dashboardRecentWidgetHeading']) {
+        for(const [index,id] of [[2,'dashboardMembersWidgetHeading'],[3,'dashboardRecentWidgetHeading']]) {
           const rows=unique(dashboard,'ul.MuiList-root[aria-labelledby="'+id+'"]');
-          if(!rows)rejected.add(family);
-          else all(rows,':scope > li > a.MuiListItem-button[role="button"]').forEach(e=>{
+          if(!rows&&!cardLoading(cards[index]))rejected.add(family);
+          else if(rows)all(rows,':scope > li > a.MuiListItem-button[role="button"]').forEach(e=>{
             if(!surface(e,'settings-row',[TRANSPARENT,'rgba(0, 0, 0, 0.04)']))rejected.add(family);
           });
         }
@@ -1072,11 +1073,12 @@
         all(dashboard,'ul[aria-labelledby="dashboardGetStartedWidgetHeading"] > li > a.MuiLink-root > div > p.MuiTypography-root').forEach(e=>{
           if(paintValue(e,'color')==='rgb(116, 116, 129)')plan(e,'data-cg-text','secondary');
         });
-        // Before its data arrives the analytics card shows a static empty-state line.
-        if(dashLoading&&cards[0])all(cards[0],'p.MuiTypography-root:not(#dashboardAnalyticsWidgetHeading)').forEach(e=>{
-          if(!e.childElementCount&&paintValue(e,'color')==='rgb(58, 57, 74)')plan(e,'data-cg-text','text');
-        });
-        if(!dashLoading) {
+        // Analytics uses this text-only placeholder, without a spinner or period
+        // control, while the other cards may already be loading or populated.
+        const emptyAnalytics=cards[0]&&unique(cards[0],':scope > div > div:only-child > div:only-child > p.MuiTypography-root:only-child:not(:has(*))');
+        const analyticsPending=!!emptyAnalytics&&safe(emptyAnalytics)&&paintValue(emptyAnalytics,'color')==='rgb(58, 57, 74)';
+        if(analyticsPending)plan(emptyAnalytics,'data-cg-text','text');
+        if(!analyticsPending&&(!cardLoading(cards[0])||cards[0]?.querySelector('.recharts-responsive-container'))) {
         const analytics=cards[0];
         const plot=analytics&&unique(analytics,'.recharts-responsive-container > .recharts-wrapper');
         const svg=plot&&unique(plot,':scope > svg.recharts-surface');
@@ -1084,7 +1086,8 @@
         const dots=svg?all(svg,'.recharts-line-dots > circle.recharts-dot.recharts-line-dot'):[];
         const ticks=svg?all(svg,'text.recharts-text.recharts-cartesian-axis-tick-value'):[];
         const active=svg?all(svg,'.recharts-active-dot > circle.recharts-dot'):[];
-        if(!svg||!curve||svg.querySelectorAll('.recharts-line').length!==1||!dots.length||!ticks.length||active.length>1)rejected.add(family);
+        // Recharts draws the qualified curve and ticks before mounting its dots.
+        if(!svg||!curve||svg.querySelectorAll('.recharts-line').length!==1||!ticks.length||active.length>1)rejected.add(family);
         else {
           const known=new Set([curve,...dots,...active,...ticks,...all(svg,'text.recharts-cartesian-axis-tick-value > tspan'),...all(svg,'defs > clipPath > rect')]);
           if(all(svg,'path,circle,line,polyline,polygon,rect,ellipse,text,tspan,image,use,foreignObject').some(e=>!known.has(e)))rejected.add(family);

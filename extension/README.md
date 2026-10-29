@@ -12,7 +12,7 @@ A colour-only dark theme for the Cognigy.AI web app. Layout, typography, images 
 
 - **Covered:** authoring (`/project…`), the project index (`/projects`), Admin Center (`/admincenter`) and Insights (`/insights`).
 - **Excluded:** the public cognigy.com website and embedded CXone frames.
-- Screens the extension does not recognise keep their native colours. The popup's **Partly supported** status means some native areas remain light.
+- Screens the extension does not recognise keep their native colours. The popup shows **Partly supported** on project and workspace routes; that label alone does not indicate a refused component or a light surface.
 
 ## Privacy
 
