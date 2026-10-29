@@ -46,6 +46,8 @@ async function main() {
     const send=(method,params={})=>new Promise(r=>{const n=++id;pending.set(n,r);ws.send(JSON.stringify({id:n,method,params}));});
     const evaluate=async expression=>(await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true})).result?.result?.value;
     await send('Runtime.enable');await send('Page.enable');
+    // Headless has no focused OS window; exercise actual focus events and CSS.
+    await send('Emulation.setFocusEmulationEnabled',{enabled:true});
     for(const page of pages) {
       errors.length=0;
       await send('Page.navigate',{url:origin+'/'+page});

@@ -1072,6 +1072,7 @@
         // Original Explore background images and avatar subtrees are untouched.
         all(dashboard,'ul[aria-labelledby="dashboardGetStartedWidgetHeading"] > li > a.MuiLink-root > div > p.MuiTypography-root').forEach(e=>{
           if(paintValue(e,'color')==='rgb(116, 116, 129)')plan(e,'data-cg-text','secondary');
+          else if(paintValue(e,'color')==='rgb(6, 28, 76)'&&e.closest('a.MuiLink-root:focus'))plan(e,'data-cg-text','accent');
         });
         // Analytics uses this text-only placeholder, without a spinner or period
         // control, while the other cards may already be loading or populated.

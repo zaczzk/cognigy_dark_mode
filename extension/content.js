@@ -215,12 +215,13 @@ globalThis.CogGraphiteStart=() => {
     if(dirty.has('list'))dirty.add('menu');
     if(identityChanged)schedule();else if(dirty.size)schedule(dirty);
   });
-  // Native slider and Snapshot-row hover/focus change shadow paint without
-  // necessarily mutating DOM. Requalify only their observed owners.
+  // Native slider/Snapshot shadows and dashboard resource focus ink can change
+  // without mutating DOM. Requalify only their observed owners.
   for(const type of ['pointerover','pointerout','focusin','focusout'])on(globalThis,type,event=>{
     if(event.target?.closest?.('div#mainContent .MuiSlider-thumb')&&event.target.closest('div#mainContent')?.querySelector('#AIAgent-Tab-persona'))schedule(new Set(['agents']));
     if(event.target?.closest?.('div:has(> [role="banner"][data-test="AgentSettingsHeader"]) .MuiSlider-thumb,div:has(> [role="banner"][data-test="AgentSettingsHeader"]) button[type="button"]:not(.MuiButtonBase-root)'))schedule(new Set(['settings']));
     if(/\/snapshots\/?$/.test(loc.pathname)&&event.target?.closest?.('main#mainContent [role="row"]'))schedule(new Set(['list','menu']));
+    if((type==='focusin'||type==='focusout')&&/^\/project\/[^/]+\/[^/]+\/?$/.test(loc.pathname)&&event.target?.closest?.('div#mainContent[role="main"] ul[aria-labelledby="dashboardGetStartedWidgetHeading"] > li > a.MuiLink-root'))schedule(new Set(['dashboard']));
   });
   on(globalThis,'change',event=>{
     const family=/^\/admincenter\//.test(loc.pathname)?'admin':/^\/insights\//.test(loc.pathname)?'insights':null;
