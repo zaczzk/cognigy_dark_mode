@@ -4,6 +4,7 @@
   const sites=CogGraphiteSites,$=s=>document.querySelector(s);
   let entries=[],current=null,tabId,documentId,recognized=false,busy=false,sequence=0,acknowledged=false,restoreFocus=null,connectionMessage='Checking appearance…';
   const notice=text=>{$('#notice').textContent=text;$('#notice').hidden=!text;};
+  const say=(text,tone)=>{$('#status').textContent=text;$('#status').dataset.tone=tone;};
   const call=async message=>{const result=await chrome.runtime.sendMessage(message);if(!result?.ok)throw new Error(result?.error||'Couldn’t complete this action. Try again.');return result;};
   const badge=(text,state)=>{const b=document.createElement('span');b.className='badge';b.textContent=text;b.dataset.state=state;return b;};
   const label=entry=>!entry.enabled?'Paused':!entry.permission?'Permission needed':entry.verified?'Enabled':'Not verified';
@@ -13,13 +14,12 @@
   function renderCurrent() {
     if(!current)return;
     const saved=entries.find(e=>e.origin===current.origin);
-    $('#host').textContent=new URL(current.origin).hostname;
+    const hostname=new URL(current.origin).hostname;
+    $('#host').textContent=hostname;$('#site-initial').textContent=hostname[0].toUpperCase();
     $('#application-path').textContent=saved?.basePath||current.basePath||'Cognigy application';
-    $('#site-state').textContent=saved?label(saved):recognized?'Ready to enable':'Not recognised';
-    $('#site-state').dataset.state=saved?.enabled&&saved.permission?'enabled':'pending';
     $('#enable-site').hidden=!(recognized&&(!saved?.enabled||!saved.permission));$('#enable-site').disabled=busy;
-    if(!saved?.enabled||!saved.permission||!recognized){globalThis.CogGraphitePopup?.disconnect();$('#status').textContent=saved&&!saved.enabled?'Site paused':recognized?'Ready when you are':'Open a Cognigy application';}
-    else if(!acknowledged)$('#status').textContent=connectionMessage;
+    if(!saved?.enabled||!saved.permission||!recognized){globalThis.CogGraphitePopup?.disconnect();say(saved&&!saved.enabled?'Site paused':saved&&!saved.permission?'Permission needed':recognized?'Ready to enable':'Open a Cognigy application','idle');}
+    else if(!acknowledged)say(connectionMessage,connectionMessage==='Checking appearance…'?'busy':'warn');
   }
   async function refresh() {
     const request=++sequence,result=await call({type:'SITES_LIST'});if(request!==sequence)return;
@@ -99,6 +99,8 @@
     const saved=entries.find(e=>e.origin===current.origin),profile={...current,...saved,enabled:true,rev:saved?.rev||'probe',verified:false};
     recognized=result.result.recognized&&sites.logicalPath({origin:current.origin,pathname:result.result.path},profile)!==null;
     renderCurrent();if(saved?.enabled&&saved.permission&&recognized)await reconnect();
-  })().catch(error=>{$('#host').textContent='No application selected';$('#site-state').textContent='Not available';$('#application-path').textContent='Cognigy application';$('#status').textContent=error.message.includes('public Cognigy')?'Public website excluded':'Open a Cognigy application';});
+  })().catch(error=>{$('#host').textContent='No application selected';$('#site-initial').textContent='–';$('#application-path').textContent='Cognigy application';say(error.message.includes('public Cognigy')?'Public website excluded':'Open a Cognigy application','idle');});
   });
+  const scheme=matchMedia('(prefers-color-scheme: dark)'),hint=()=>{$('#system-hint').textContent=scheme.matches?'Dark now':'Original now';};
+  hint();scheme.addEventListener('change',hint);$('#version').textContent='v'+CogGraphiteBuild.version;
 })();

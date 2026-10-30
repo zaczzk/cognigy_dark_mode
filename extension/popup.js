@@ -1,13 +1,15 @@
 (() => {
   const build=CogGraphiteBuild;
   const core=CogGraphiteCore, host=document.querySelector('#host'), status=document.querySelector('#status');
-  const fieldset=document.querySelector('fieldset'), reset=document.querySelector('#reset');
-  const labels={original:'Original',dark:'Dark applied','system-dark':'System · Dark','system-original':'System · Original',partial:'Partly supported',unsupported:'Page not supported',forced:'System colours active',applying:'Applying…'};
+  const fieldset=document.querySelector('fieldset');
+  const labels={original:'Original',dark:'Dark applied','system-dark':'System · Dark','system-original':'System · Original',partial:'Dark · some areas kept original',unsupported:'Page not supported',forced:'System colours active',applying:'Applying…'};
+  const tones={original:'off','system-original':'off',dark:'on','system-dark':'on',partial:'on'};
   let documentId;
   let tabId, siteId, requestId=0, statusSequence=0, writing=Promise.resolve(),lastSaved='system',saveError=false;
   const select=mode=>{document.querySelector(`input[value="${mode}"]`).checked=true;};
+  const say=(text,tone)=>{status.textContent=text;status.dataset.tone=tone;};
   function disconnected(message='Open Cognigy, or reload its tab') {
-    fieldset.disabled=true;reset.disabled=true;select(lastSaved);status.textContent=message;globalThis.CogGraphiteSiteUI?.disconnected(message);
+    fieldset.disabled=true;select(lastSaved);say(message,'warn');globalThis.CogGraphiteSiteUI?.disconnected(message);
   }
   async function acknowledge(id,expectedMode) {
     if(id!==requestId)return;
@@ -22,20 +24,22 @@
     }
     siteId=response.siteId;host.textContent=globalThis.CogGraphiteSiteUI?CogGraphiteSiteUI.host(siteId):core.hosts[siteId];
     globalThis.CogGraphiteSiteUI?.connected();
-    fieldset.disabled=false;reset.disabled=false;
+    fieldset.disabled=false;
     lastSaved=response.savedMode;select(lastSaved);
-    status.textContent=saveError?'Couldn’t save. Try again.':labels[response.status]||'Page not supported';
+    // Every project route reports partial coverage; only a refused family is worth surfacing.
+    const shown=response.status==='partial'&&!response.refusedFamilies?.length?(response.savedMode==='system'?'system-dark':'dark'):response.status;
+    if(saveError)say('Couldn’t save. Try again.','warn');else say(labels[shown]||'Page not supported',tones[shown]||'warn');
   }
   function save(mode) {
     if(!siteId || !core.validMode(mode)) return;
     const saveSite=siteId;
-    const id=++requestId;saveError=false;status.textContent='Applying…';
+    const id=++requestId;saveError=false;say('Applying…','busy');
     writing=writing.catch(()=>{}).then(async()=>{
       if(id!==requestId)return;
       try {await chrome.storage.local.set({[core.key(saveSite)]:{mode}});if(id===requestId)lastSaved=mode;}
       catch {
         if(id!==requestId)return;
-        saveError=true;select(lastSaved);status.textContent='Couldn’t save. Try again.';
+        saveError=true;select(lastSaved);say('Couldn’t save. Try again.','warn');
         try {await acknowledge(id);}catch {if(id===requestId)disconnected('Couldn’t save. Open Cognigy, or reload its tab');}
         return;
       }
@@ -50,7 +54,6 @@
     });
   }
   document.querySelectorAll('input[name="mode"]').forEach(input=>input.addEventListener('change',()=>save(input.value)));
-  reset.addEventListener('click',()=>save('system'));
   chrome.storage.onChanged.addListener((changes,area)=>{
     if(area==='local' && siteId && Object.hasOwn(changes,core.key(siteId))) {
       const current=requestId;

@@ -224,18 +224,24 @@ test('continuous retryable mutations preserve a deadline and permanent refusal c
 });
 function popupHarness() {
   let selected,storageListener,rejectWrite=false;const reads=[],writes=[];
-  const element=()=>({textContent:'',disabled:true,addEventListener(event,fn){this[event]=fn;}});
-  const host=element(),status=element(),fieldset=element(),reset=element();
+  const element=()=>({textContent:'',disabled:true,dataset:{},addEventListener(event,fn){this[event]=fn;}});
+  const host=element(),status=element(),fieldset=element();
   const inputs=['native','dark','system'].map(value=>({...element(),value,set checked(v){if(v)selected=value;}}));
-  const document={querySelector(selector){return {'#host':host,'#status':status,'fieldset':fieldset,'#reset':reset}[selector]||inputs.find(x=>selector===`input[value="${x.value}"]`);},querySelectorAll(){return inputs;}};
+  const document={querySelector(selector){return {'#host':host,'#status':status,'fieldset':fieldset}[selector]||inputs.find(x=>selector===`input[value="${x.value}"]`);},querySelectorAll(){return inputs;}};
   const chrome={runtime:{sendMessage:async()=>({ok:true})},tabs:{query:async()=>[{id:1}],sendMessage(tab,msg){return new Promise((resolve,reject)=>reads.push({msg,resolve,reject}));}},storage:{local:{set(value){writes.push(value);return rejectWrite?Promise.reject(new Error('Write rejected')):Promise.resolve();}},onChanged:{addListener(fn){storageListener=fn;}}}};
   vm.runInNewContext(fs.readFileSync(path.join(base,'popup.js'),'utf8'),{CogGraphiteCore:core,CogGraphiteBuild:{candidateId:'test-candidate',version:'0.11.0',protocolVersion:1},document,chrome});
-  const reply=(index,mode,identity={candidateId:'test-candidate',version:'0.11.0',protocolVersion:1})=>reads[index].resolve({...identity,requestId:reads[index].msg.requestId,siteId:'trial',savedMode:mode,appliedMode:mode==='dark'?'dark':'native',status:mode==='dark'?'dark':'original'});
-  return {reads,writes,status,fieldset,reset,reply,failWrites(value=true){rejectWrite=value;},disconnect(index){reads[index].reject(new Error('No receiver'));},selected:()=>selected,choose(mode){selected=mode;inputs.find(x=>x.value===mode).change();},external(){storageListener({'cogDepth.v1.trial':{}},'local');}};
+  const reply=(index,mode,identity={candidateId:'test-candidate',version:'0.11.0',protocolVersion:1},extra={})=>reads[index].resolve({...identity,requestId:reads[index].msg.requestId,siteId:'trial',savedMode:mode,appliedMode:mode==='dark'?'dark':'native',status:mode==='dark'?'dark':'original',...extra});
+  return {reads,writes,status,fieldset,reply,failWrites(value=true){rejectWrite=value;},disconnect(index){reads[index].reject(new Error('No receiver'));},selected:()=>selected,choose(mode){selected=mode;inputs.find(x=>x.value===mode).change();},external(){storageListener({'cogDepth.v1.trial':{}},'local');}};
 }
-test('reset this site restores automatic System mode',async()=>{
-  const h=popupHarness();await flush();h.reply(0,'dark');await flush();h.reset.click();await flush();
+test('choosing System restores automatic System mode',async()=>{
+  const h=popupHarness();await flush();h.reply(0,'dark');await flush();h.choose('system');await flush();
   assert.equal(h.writes.at(-1)['cogDepth.v1.trial'].mode,'system');h.reply(1,'system');await flush();assert.equal(h.selected(),'system');
+});
+test('popup reports partial coverage only when a family was refused',async()=>{
+  for(const [mode,refusedFamilies,text,tone] of [['dark',[],'Dark applied','on'],['system',[],'System · Dark','on'],['dark',['chat'],'Dark · some areas kept original','on']]) {
+    const h=popupHarness();await flush();h.reply(0,mode,undefined,{status:'partial',refusedFamilies});await flush();
+    assert.equal(h.status.textContent,text);assert.equal(h.status.dataset.tone,tone);
+  }
 });
 test('popup rejects an older user choice acknowledgement',async()=>{
   const h=popupHarness();await flush();h.reply(0,'native');await flush();h.choose('dark');await flush();
@@ -260,7 +266,7 @@ test('failed write reconciles a concurrent preference and preserves its error',a
 });
 test('saved preference with no acknowledgement is not reported applied',async()=>{
   const h=popupHarness();await flush();h.reply(0,'native');await flush();h.choose('dark');await flush();h.disconnect(1);await flush();
-  assert.equal(h.selected(),'dark');assert.equal(h.status.textContent,'Saved. Open Cognigy, or reload its tab');assert.equal(h.fieldset.disabled,true);assert.equal(h.reset.disabled,true);
+  assert.equal(h.selected(),'dark');assert.equal(h.status.textContent,'Saved. Open Cognigy, or reload its tab');assert.equal(h.fieldset.disabled,true);
 });
 test('no receiver gives truthful recovery and leaves controls disabled',async()=>{
   const h=popupHarness();await flush();h.disconnect(0);await flush();assert.equal(h.status.textContent,'Open Cognigy, or reload its tab');assert.equal(h.fieldset.disabled,true);
@@ -272,7 +278,7 @@ test('older failed status cannot disconnect a newer acknowledged popup',async()=
 test('popup rejects legacy, mismatched candidate, version and protocol acknowledgements',async()=>{
   for(const identity of [{},{candidateId:'older',version:'0.11.0',protocolVersion:1},{candidateId:'test-candidate',version:'0.10.0',protocolVersion:1},{candidateId:'test-candidate',version:'0.11.0',protocolVersion:2}]) {
     const h=popupHarness();await flush();h.reply(0,'dark',identity);await flush();
-    assert.equal(h.fieldset.disabled,true);assert.equal(h.reset.disabled,true);
+    assert.equal(h.fieldset.disabled,true);
     assert.equal(h.status.textContent,'Reload Cognigy to use this version');assert.notEqual(h.selected(),'dark');
   }
 });
