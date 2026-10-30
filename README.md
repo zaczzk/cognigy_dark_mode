@@ -43,6 +43,8 @@ The toolbar popup follows your system theme: **Ink** in dark mode, **Paper** in 
 | **Dark** | Keeps Cognigy dark. |
 | **Original** | Restores Cognigy's native colours. |
 
+**Higher contrast:** a switch in the popup strengthens text, icons, borders and focus rings, in the popup and on every enabled Cognigy site. Surfaces keep the same graphite palette.
+
 **Trial:** `trial.cognigy.ai` is enabled by default.
 
 **Another Cognigy host:** open the popup → **Enable on this site** → approve access to that hostname.

@@ -36,3 +36,24 @@
   --cg-popover-shadow: rgb(0 0 0 / 0.42);
   --cg-backdrop: rgb(0 0 0 / 0.56);
 }
+/* Higher contrast: same surfaces, stronger text, icons, borders and states. */
+:root[data-cg-palette="graphite-v3"][data-cg-contrast="more"] {
+  --cg-canvas: #111419;
+  --cg-text: #F7F9FC;
+  --cg-secondary: #D5DCE6;
+  --cg-muted: #CBD4E0;
+  --cg-icon: #DEE5EE;
+  --cg-border: #6E7D93;
+  --cg-control-border: #A9B6C8;
+  --cg-connector: #ABB8CA;
+  --cg-agent-rim: #7B8DA3;
+  --cg-accent: #ADCBFF;
+  --cg-focus: #FFFFFF;
+  --cg-button: #3A5CA3;
+  --cg-button-hover: #4265AE;
+  --cg-button-active: #314F8F;
+  --cg-error: #FFB3BA;
+  --cg-success: #96DFBE;
+  --cg-warning: #F3CF91;
+  --cg-info: #A9CFF6;
+}

@@ -14,6 +14,8 @@ test('exact sites and strict preference values',()=>{
   assert.equal(core.modeOf({mode:'native'}),'native');
   assert.equal(core.requestedDark('system',false),false);
   assert.equal(core.requestedDark('system',true),true);
+  for(const value of [undefined,null,{},{level:'standard'},{level:'MORE'},{level:'more',extra:true}])assert.equal(core.contrastOf(value),'standard');
+  assert.equal(core.contrastOf({level:'more'}),'more');
 });
 class Element {
   constructor(){this.attrs=new Map();}
@@ -24,14 +26,14 @@ class Element {
 }
 function harness({initial='native',missing=false,defer=false,origin='https://trial.cognigy.ai',navigation=true,retry=false}={}) {
   const storageKey='cogDepth.v1.'+core.sites[origin];
-  const root=new Element(),paint=new Element(),events={},nav={},media={},qualifications=[],observations=[];let stored=missing?undefined:{mode:initial},storageListener,receiver,resolveGet,mutation;
+  const root=new Element(),paint=new Element(),events={},nav={},media={},qualifications=[],observations=[];let stored=missing?undefined:{mode:initial},contrastStored,storageListener,receiver,resolveGet,mutation;
   const timers=new Map(),frames=new Map();let timerId=0;
   const environment={location:{origin},document:{documentElement:root,addEventListener(name,fn){events[name]=fn;}},CogGraphiteCore:core,
     CogGraphiteAdapters:{qualify(doc,loc,own,only){qualifications.push(only?[...only]:null);own(paint,'data-cg-slot','panel','chart');return {applied:true,partial:retry,retryFamilies:retry&&(!only||only.has('chat'))?['chat']:[]};}},
     matchMedia(query){return media[query]??={matches:false,addEventListener(name,fn){this.listener=fn;}};},
     queueMicrotask,setTimeout(fn){timers.set(++timerId,fn);return timerId;},clearTimeout(id){timers.delete(id);},requestAnimationFrame(fn){frames.set(++timerId,fn);return timerId;},cancelAnimationFrame(id){frames.delete(id);},MutationObserver:class{constructor(fn){mutation=fn;}observe(target,options){observations.push(options);}disconnect(){}},
     addEventListener(name,fn){events[name]=fn;},
-    chrome:{storage:{local:{get(){if(defer)return new Promise(r=>resolveGet=r);return Promise.resolve({[storageKey]:stored});}},onChanged:{addListener(fn){storageListener=fn;}}},runtime:{id:'extension-id',onMessage:{addListener(fn){receiver=fn;}}}},
+    chrome:{storage:{local:{get(){if(defer)return new Promise(r=>resolveGet=r);return Promise.resolve({[storageKey]:stored,[core.contrastKey]:contrastStored});}},onChanged:{addListener(fn){storageListener=fn;}}},runtime:{id:'extension-id',onMessage:{addListener(fn){receiver=fn;}}}},
   };
   environment.window=environment;environment.top=environment;
   if(navigation)environment.navigation={addEventListener(name,fn){nav[name]=fn;}};
@@ -39,8 +41,9 @@ function harness({initial='native',missing=false,defer=false,origin='https://tri
   return {root,paint,events,nav,media,environment,qualifications,observations,timers,frames,runFrames(){for(const [id,fn] of [...frames]){frames.delete(id);fn();}},runTimers(){for(const [id,fn] of [...timers]){timers.delete(id);fn();}},mutate(records){mutation(records);},
     set(mode){stored={mode};storageListener({[storageKey]:{newValue:stored}},'local');},
     stored(mode){stored={mode};},
+    contrast(level){contrastStored={level};storageListener({[core.contrastKey]:{newValue:contrastStored}},'local');},
     deferNext(){defer=true;},
-    complete(mode){resolveGet({[storageKey]:{mode}});defer=false;},
+    complete(mode){resolveGet({[storageKey]:{mode},[core.contrastKey]:contrastStored});defer=false;},
     status(id=7){return new Promise(resolve=>receiver({type:'GET_STATUS',requestId:id},{id:'extension-id'},resolve));}
   };
 }
@@ -222,7 +225,18 @@ test('continuous retryable mutations preserve a deadline and permanent refusal c
   h.environment.CogGraphiteAdapters.qualify=()=>({applied:false,failedFamilies:['chat'],retryFamilies:[]});
   h.mutate([{type:'attributes',attributeName:'class',target}]);await flush();assert.equal(h.timers.size,0);
 });
-function popupHarness() {
+test('higher contrast marks the root only while dark paint is applied and restores exactly',async()=>{
+  const h=harness({initial:'dark'});await flush();assert.equal(h.root.getAttribute('data-cg-contrast'),null);
+  h.contrast('more');await flush();assert.equal(h.root.getAttribute('data-cg-contrast'),'more');assert.equal(h.root.getAttribute('data-cg-palette'),'graphite-v3');
+  h.contrast('standard');await flush();assert.equal(h.root.hasAttribute('data-cg-contrast'),false);assert.equal(h.root.getAttribute('data-cg-palette'),'graphite-v3');
+  h.contrast('more');await flush();h.set('native');await flush();assert.equal(h.root.attrs.size,0);
+  h.set('dark');await flush();assert.equal(h.root.getAttribute('data-cg-contrast'),'more');
+  h.environment.CogGraphiteController.destroy();assert.equal(h.root.attrs.size,0);
+});
+test('higher contrast saved before load applies on the first qualification',async()=>{
+  const h=harness({initial:'dark',defer:true});h.contrast('more');h.complete('dark');await flush();
+  assert.equal(h.root.getAttribute('data-cg-contrast'),'more');
+});function popupHarness() {
   let selected,storageListener,rejectWrite=false;const reads=[],writes=[];
   const element=()=>({textContent:'',disabled:true,dataset:{},addEventListener(event,fn){this[event]=fn;}});
   const host=element(),status=element(),fieldset=element();

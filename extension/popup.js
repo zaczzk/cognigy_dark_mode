@@ -60,6 +60,18 @@
       writing.finally(()=>{if(current===requestId)acknowledge(current).catch(()=>{if(current===requestId)disconnected();});});
     }
   });
+  // Higher contrast is one global choice; the popup previews it at once and
+  // content scripts on every enabled site pick it up from storage.
+  const contrast=document.querySelector('#contrast');
+  if(contrast) {
+    const show=level=>{contrast.checked=level==='more';document.documentElement.dataset.contrast=level;};
+    chrome.storage.local.get(core.contrastKey).then(value=>show(core.contrastOf(value[core.contrastKey])),()=>show('standard'));
+    contrast.addEventListener('change',()=>{
+      const level=contrast.checked?'more':'standard';show(level);
+      chrome.storage.local.set({[core.contrastKey]:{level}}).catch(()=>{show(level==='more'?'standard':'more');say('Couldn’t save. Try again.','warn');});
+    });
+    chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&Object.hasOwn(changes,core.contrastKey))show(core.contrastOf(changes[core.contrastKey].newValue));});
+  }
   globalThis.CogGraphitePopup={disconnect(){requestId++;siteId=undefined;disconnected();},async connect(id,doc){tabId=id;documentId=doc;return acknowledge(++requestId);}};
   if(!globalThis.CogGraphiteSiteUI)chrome.tabs.query({active:true,currentWindow:true}).then(async tabs=>{
     tabId=tabs[0]?.id;if(tabId===undefined) throw new Error('No tab');await acknowledge(++requestId);

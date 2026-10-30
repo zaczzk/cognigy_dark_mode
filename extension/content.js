@@ -15,7 +15,7 @@ globalThis.CogGraphiteStart=() => {
   const storageKey = core.key(siteId);
   const darkMedia = matchMedia('(prefers-color-scheme: dark)');
   const forcedMedia = matchMedia('(forced-colors: active)');
-  let mode = 'native', generation = 0, ready = false, suspended = false;
+  let mode = 'native', contrast = 'standard', generation = 0, ready = false, suspended = false;
   let scheduled = false, state = {appliedMode:'native',status:'original'},refusedFamilies=[];
   let pendingFamilies = new Set(), pendingAll = false;
   let marked = new Map();
@@ -67,6 +67,13 @@ globalThis.CogGraphiteStart=() => {
     if(family!=='palette')guardTransition(el,transition);
     if(name==='data-cg-slot'&&value.split(' ').includes('placeholder'))guardPlaceholder(el);
     if(el.getAttribute(name)!==value)el.setAttribute(name, value);
+  };
+  // Palette-family markers survive preserved requalification, so a switched-off
+  // option restores its own prior value instead of waiting for a full clear.
+  const disown = (el, name) => {
+    const entry=marked.get(el)?.get(name);if(!entry)return;
+    if(entry.prior===null)el.removeAttribute(name);else el.setAttribute(name,entry.prior);
+    marked.get(el).delete(name);if(!marked.get(el).size)marked.delete(el);
   };
   function clear(only=null,preserveActivation=false) {
     for (const [el, attrs] of marked) {
@@ -144,6 +151,7 @@ globalThis.CogGraphiteStart=() => {
       const hasPaint=[...marked.values()].some(attrs=>[...attrs.values()].some(entry=>entry.family!=='palette'));
       if (!result.applied && !hasPaint) { clear(); state.status='unsupported'; return; }
       own(document.documentElement, 'data-cg-palette', 'graphite-v3');
+      if(contrast==='more')own(document.documentElement,'data-cg-contrast','more');else disown(document.documentElement,'data-cg-contrast');
       own(document.documentElement, 'data-cg-build', build.candidateId);
       state = {appliedMode:'dark',status:result.partial?'partial':mode==='system'?'system-dark':'dark'};
       const insightsNav=document.querySelector?.('nav[aria-label="Insights"]');
@@ -168,12 +176,12 @@ globalThis.CogGraphiteStart=() => {
   }
   async function refresh() {
     if(destroyed)return;
-    const before = generation, previousMode=mode, wasReady=ready;
+    const before = generation, previousMode=mode, previousContrast=contrast, wasReady=ready;
     try {
-      const value = await chrome.storage.local.get(storageKey);
-      if (generation === before && !suspended && !destroyed) {mode=core.modeOf(value[storageKey]);ready=true;}
+      const value = await chrome.storage.local.get([storageKey,core.contrastKey]);
+      if (generation === before && !suspended && !destroyed) {mode=core.modeOf(value[storageKey]);contrast=core.contrastOf(value[core.contrastKey]);ready=true;}
     } catch {if(!ready) mode='native';}
-    if(!wasReady||mode!==previousMode)resolve();
+    if(!wasReady||mode!==previousMode||contrast!==previousContrast)resolve();
   }
   const excluded='.monaco-editor,[data-1password-root],[data-codex-overlay],iframe,video';
   const owners=[['shell','.SIDEBAR_WRAPPER'],['banner','[role="banner"]'],['dashboard','div:has(> [role="banner"][data-test="AgentDashboardHeader"]),.MuiPopover-root'],['settings','div:has(> [role="banner"][data-test="AgentSettingsHeader"]),.MuiAutocomplete-popper,.MuiPopover-root'],['list','main#mainContent,div#mainContent'],['agents','main#mainContent[data-test="aiAgentMainContent"],div:has(> [role="banner"][data-test="AI-Agent-Edit"]),.MuiAutocomplete-popper,.MuiTooltip-popper'],['menu','.MuiPopover-root'],['chart','#flowChartEditorTabContent'],['inspector','#editSidebarWrapper,.MuiAutocomplete-popper'],['chat','#interactionPanel'],['global','#complementaryApplicationMenu,.MuiPopover-root,.MuiDialog-root:has(#hiddenDialogTitle):has(#dialogText)']];
@@ -233,7 +241,12 @@ globalThis.CogGraphiteStart=() => {
   }
   listen(chrome.storage.onChanged,(changes, area) => {
     if(destroyed)return;
-    if (area !== 'local' || !Object.hasOwn(changes,storageKey)) return;
+    if (area !== 'local') return;
+    if (Object.hasOwn(changes,core.contrastKey)) {
+      // Before the first read completes, that read sees the new value itself.
+      contrast=core.contrastOf(changes[core.contrastKey].newValue);if(ready){generation++;schedule();}
+    }
+    if (!Object.hasOwn(changes,storageKey)) return;
     generation++;mode=core.modeOf(changes[storageKey].newValue);ready=true;schedule();
   });
   listen(chrome.runtime.onMessage,(message, sender, respond) => {
