@@ -18,6 +18,25 @@
 
 ## Use it
 
+The toolbar popup follows your system theme: **Ink** in dark mode, **Paper** in light mode.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/popup-ink.png">
+  <img alt="Graphite popup in Paper (light): current site with Dark applied, a new site ready to enable, and the saved sites list" src="docs/images/popup-paper.png">
+</picture>
+
+<details><summary>Both themes</summary>
+
+**Ink (dark)**
+
+![Graphite popup in Ink (dark)](docs/images/popup-ink.png)
+
+**Paper (light)**
+
+![Graphite popup in Paper (light)](docs/images/popup-paper.png)
+
+</details>
+
 | Mode | Result |
 |---|---|
 | **System** | Follows your system's light/dark preference. |
@@ -84,4 +103,4 @@ CI checks PRs and pushes to `main`.
 
 ## License & affiliation
 
-[MIT](LICENSE). Unofficial community project, unaffiliated with NiCE Cognigy. "Cognigy" is its owner's trademark and describes compatibility.
+[MIT](LICENSE). The popup bundles [Be Vietnam Pro](extension/fonts/OFL.txt) under the SIL Open Font License 1.1. Unofficial community project, unaffiliated with NiCE Cognigy. "Cognigy" is its owner's trademark and describes compatibility.

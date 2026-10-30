@@ -9,14 +9,14 @@ parser.add_argument('--label',required=True)
 args=parser.parse_args()
 if not args.label or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789-' for c in args.label):
     raise SystemExit('Label must contain lowercase letters, digits and hyphens only')
-files=['sites.js','worker.js','bootstrap.js','startup-dark.js','startup-system.js','startup.css','site-ui.js','build.js','core.js','adapters.js','content.js','manifest.json','palette.css','application.css','popup.html','popup.js','popup.css','README.md','icons/icon-16.png','icons/icon-32.png','icons/icon-48.png','icons/icon-128.png']
+files=['sites.js','worker.js','bootstrap.js','startup-dark.js','startup-system.js','startup.css','site-ui.js','build.js','core.js','adapters.js','content.js','manifest.json','palette.css','application.css','popup.html','popup.js','popup.css','README.md','icons/icon-16.png','icons/icon-32.png','icons/icon-48.png','icons/icon-128.png','fonts/be-vietnam-pro-400.woff2','fonts/be-vietnam-pro-500.woff2','fonts/be-vietnam-pro-600.woff2','fonts/OFL.txt']
 source=root/'extension'
 snapshot={name:(source/name).read_bytes() for name in files}
 manifest=json.loads(snapshot['manifest.json'])
 destination=root/'releases'/args.label
 if destination.exists(): raise SystemExit('Candidate already exists; never overwrite a frozen build')
 destination.mkdir(parents=True)
-folder=destination/'extension';folder.mkdir();(folder/'icons').mkdir()
+folder=destination/'extension';folder.mkdir();(folder/'icons').mkdir();(folder/'fonts').mkdir()
 candidate_id=str(uuid.uuid4())
 identity={'candidateId':candidate_id,'version':manifest['version'],'protocolVersion':1}
 for name,data in snapshot.items(): (folder/name).write_bytes(data)
