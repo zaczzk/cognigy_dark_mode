@@ -143,7 +143,8 @@
         const focusedHandover=family==='inspector'&&loc.pathname.endsWith('/handover-providers')&&root.id==='editSidebarWrapper'&&unique(root,'[role="radiogroup"][aria-labelledby="tileSelectLabel"]')&&e.matches('.MuiInputBase-root.MuiInput-root.Mui-focused')&&unique(e,':scope > input#field-name.MuiInputBase-input');
         const focusedSlot=family==='inspector'&&root.id==='editSidebarWrapper'&&e.matches('.MuiInputBase-root.MuiInput-root.Mui-focused')&&(loc.pathname.endsWith('/nlu/slots-filler')&&unique(e,':scope > input.MuiInputBase-input[id^="field-"]')||(loc.pathname.endsWith('/flows')&&unique(root,'input#field-flowGenerationInput.MuiSelect-nativeInput')||loc.pathname.endsWith('/large-language-models')&&unique(root,'input#selectFielProvider')&&unique(root,'input#selectFieldModel')||loc.pathname.endsWith('/lexicons')&&unique(root,'input#field-generateEntries.MuiSwitch-input')||loc.pathname.endsWith('/nlu-connectors')&&unique(root,'[role="radiogroup"][aria-labelledby="tileSelectLabel"]')||['functions','playbooks'].includes(loc.pathname.split('/').pop())&&root.querySelectorAll('input,textarea,select').length===1||loc.pathname.endsWith('/snapshots')&&unique(root,'textarea#field-newDescription'))&&unique(e,':scope > input#field-newName.MuiInputBase-input, :scope > textarea#field-description.MuiInputBase-input, :scope > textarea#field-newDescription.MuiInputBase-input'));
         const autocompleteHover=(family==='admin'||family==='inspector'&&(loc.pathname.endsWith('/nlu/slots-filler')||loc.pathname.endsWith('/large-language-models'))&&root.id==='editSidebarWrapper'||family==='utility'&&(loc.pathname.endsWith('/settings/configuration')&&root.id==='flowSettingsTabContent'||loc.pathname.endsWith('/simulator/create')&&root.matches('[data-test="SimulationEditorHeader"]')&&unique(e,'input#selectFieldForGoal'))) &&e.matches('.MuiInputBase-root.MuiAutocomplete-inputRoot.c26-legacy-select-input-row')&&e.closest('[role="combobox"].MuiAutocomplete-root')&&unique(e,'input.MuiAutocomplete-input');
-        if(surface(e,'field',[...LIGHT,TRANSPARENT,'rgb(245, 245, 246)',...(agentEditable||focusedAgent||focusedSlot||focusedHandover||focusedKnowledge||focusedScenario||autocompleteHover||goalStepField||trainerField?['rgb(236, 236, 237)']:[])])) {
+        const wizardField=family==='project-index'&&e.matches('.MuiInputBase-root')&&e.closest('[data-test="AgentCreationWizard"] form[role="form"]')&&unique(e,':scope > input#field-name,:scope > input#selectField-locale');
+        if(surface(e,'field',[...LIGHT,TRANSPARENT,'rgb(245, 245, 246)',...(wizardField||agentEditable||focusedAgent||focusedSlot||focusedHandover||focusedKnowledge||focusedScenario||autocompleteHover||goalStepField||trainerField?['rgb(236, 236, 237)']:[])])) {
           if(e.matches('.MuiInputBase-root'))text(e);
           all(e,':scope > .MuiOutlinedInput-notchedOutline').forEach(outline=>slot(outline,'field-outline'));
         } else rejected.add(family);
@@ -353,7 +354,13 @@
       family=adminRoute?'admin':insightsRoute?'insights':'project-index';
       if(!enabled(family))return;
       let heading,main,page;
-      if(indexRoute) {
+      // The new-project wizard replaces the index body on the same route.
+      const wizard=indexRoute&&!unique(app,'#indexDashboardAgentListheader')&&unique(app,'[data-test="AgentCreationWizard"]');
+      if(wizard) {
+        main=unique(wizard,':scope > [role="main"]');heading=main&&unique(main,'h1[id^="wizardMainContentHeader-"]');
+        if(wizard.childElementCount!==2||!heading||!unique(wizard,':scope > [role="complementary"][aria-label="Project Creation Steps"]')){partial=true;return;}
+        page=wizard;
+      } else if(indexRoute) {
         heading=unique(app,'[data-test="AgentListHeader"] > h1#indexDashboardAgentListheader');main=unique(app,'#mainContent.contentAreaWithNews');
         const list=unique(app,'[role="navigation"][aria-labelledby="indexDashboardAgentListheader"]');
         if(!heading||!main||!list||!unique(app,'button[data-test="CreateAgentButton"]')){partial=true;return;}
@@ -436,7 +443,7 @@
       if(!surface(main,'canvas',[...LIGHT,TRANSPARENT])){rejected.add(family);return;}
       // Verified page-frame containers: no descendant-wide background rewrite.
       all(page,':scope > div,[role="banner"],[role="banner"] > div,[data-test="UserHeader"]').forEach(e=>{
-        if([...LIGHT,'rgb(245, 245, 246)'].includes(paintValue(e,'backgroundColor')))surface(e,e.matches('[role="banner"], [role="banner"] > div,[data-test="UserHeader"]')?'shell':'canvas',[...LIGHT,'rgb(245, 245, 246)']);
+        if([...LIGHT,'rgb(245, 245, 246)'].includes(paintValue(e,'backgroundColor')))surface(e,e.matches('[role="banner"], [role="banner"] > div,[data-test="UserHeader"],[data-test="AgentCreationWizard"] > [role="complementary"]')?'shell':'canvas',[...LIGHT,'rgb(245, 245, 246)']);
       });
       if(adminRoute&&loc.pathname.includes('/resources/'))all(page,'div:has(> #dataListHeader),div:has(> div > #dataListHeader),div:has(> #llmEditorId),div:has(> div > #llmEditorId),div:has(> div > div > #llmEditorId)').forEach(e=>{
         if(LIGHT.includes(paintValue(e,'backgroundColor')))surface(e,'shell');
