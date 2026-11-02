@@ -29,6 +29,11 @@ async function reconcile(entries) {
       const base=entry.origin+entry.basePath+'/'+area;return [base,base+'/*',base+'?*'];
     });
     startup.push({id,matches,js:['startup-'+mode+'.js','sites.js','bootstrap.js','build.js','core.js','adapters.js','content.js'],css:['startup.css','palette.css','application.css'],runAt:'document_start',persistAcrossSessions:true,world:'ISOLATED',allFrames:false,matchOriginAsFallback:false});
+    // The app is entered through / and /login, then redirects client-side into
+    // an app route. Paint only the canvas there so the redirect is not white.
+    const entryId=sites.registrationId(entry.origin)+'-entry';wanted.push(entryId);
+    const entryBase=entry.origin+entry.basePath;
+    startup.push({id:entryId,matches:[entryBase+'/',entryBase+'/?*',entryBase+'/login',entryBase+'/login?*',entryBase+'/login/*'],js:['entry-'+mode+'.js'],css:['startup.css'],runAt:'document_start',persistAcrossSessions:true,world:'ISOLATED',allFrames:false,matchOriginAsFallback:false});
   }
   const obsolete=registrations.filter(x=>x.id.startsWith('cg-')&&!wanted.includes(x.id)).map(x=>x.id);
   if(obsolete.length)await chrome.scripting.unregisterContentScripts({ids:obsolete});
@@ -73,8 +78,9 @@ async function ui(message) {
     const next=entries.map(e=>e.origin===found.origin?{...e,enabled:false,rev:stamp()}:e);
     await persist(next);await reconcile(next);
     if(message.type==='SITE_REMOVE') {
-      if(found.origin!==sites.trial) {
-        const removed=await chrome.permissions.remove({origins:[sites.pattern(found.origin)]});
+      // A regional grant is shared, so it is revoked only with the last regional site.
+      if(found.origin!==sites.trial&&!(sites.regional(found.origin)&&next.some(e=>e.origin!==found.origin&&sites.regional(e.origin)))) {
+        const removed=await chrome.permissions.remove({origins:[sites.grant(found.origin)]});
         if(!removed&&await allowed(found.origin))throw new Error('Site paused. Remove its access in Chrome, then retry.');
       }
       await chrome.storage.local.remove(sites.preferenceKey(found.origin));

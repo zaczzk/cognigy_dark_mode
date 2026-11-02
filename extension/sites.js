@@ -29,7 +29,10 @@
   const siteId=origin=>origin===trial?'trial':origin;
   const preferenceKey=origin=>'cogDepth.v1.'+siteId(origin);
   const pattern=origin=>origin+'/*';
+  // Regional tenants (cognigy-au1, cognigy-eu2, ...) share one Chrome grant so a new region needs no new prompt. Scripts still register per enrolled origin.
+  const regional=origin=>{try{return /^cognigy-[a-z0-9]{2,12}\.nicecxone\.com$/.test(new URL(origin).hostname);}catch{return false;}};
+  const grant=origin=>regional(origin)?'https://*.nicecxone.com/*':pattern(origin);
   const registrationId=origin=>'cg-'+encodeURIComponent(origin);
-  const api=Object.freeze({key,trial,address,valid,logicalPath,siteId,preferenceKey,pattern,registrationId});
+  const api=Object.freeze({key,trial,address,valid,logicalPath,siteId,preferenceKey,pattern,regional,grant,registrationId});
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else globalThis.CogGraphiteSites=api;
 })();

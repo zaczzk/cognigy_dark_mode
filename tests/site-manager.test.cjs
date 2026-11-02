@@ -36,7 +36,7 @@ test('fresh trial installation activates from manifest host permission without p
   assert.equal(record.origin,sites.trial);assert.equal(record.enabled,true);assert.equal(record.permission,true);
   const sender={id:'extension',url:sites.trial+'/projects',frameId:0,documentId:'trial-document',tab:{id:9}};
   assert.equal((await h.send({type:'CG_ACTIVATE',rev:record.rev,token:1},sender)).ok,true);
-  assert.ok(h.calls.some(call=>call.files?.includes('content.js')));assert.equal(h.registered.size,1);
+  assert.ok(h.calls.some(call=>call.files?.includes('content.js')));assert.equal(h.registered.size,2,'startup bundle plus entry-route canvas');
   const scripts=h.calls.filter(call=>call.func||call.files?.some(file=>file.endsWith('.js')));
   assert.equal(scripts.length,3,'one gate, one controller injection and one result probe');
   assert.ok(scripts.every(call=>call.injectImmediately===true),'startup must never wait for document_idle');
@@ -127,6 +127,34 @@ test('startup canvas follows saved mode and exact application paths, and unregis
   h.data[key]={mode:'dark',extra:true};h.events.storage({[key]:{newValue:h.data[key]}},'local');await flush();assert.equal(h.registered.has(id),false);
 });
 
+test('entry routes paint only the canvas, never claim a preloaded bundle, and follow mode',async()=>{
+  const record={...entry(),basePath:'/cognigy',verified:true},h=workerHarness([record]);h.grants.add(sites.pattern(record.origin));
+  h.events.startup();await flush();
+  const id=sites.registrationId(record.origin)+'-entry';
+  let script=h.registered.get(id);assert.ok(script);
+  assert.deepEqual([...script.js],['entry-system.js']);assert.deepEqual([...script.css],['startup.css']);
+  for(const match of ['/cognigy/','/cognigy/?*','/cognigy/login','/cognigy/login?*','/cognigy/login/*'])assert.ok(script.matches.includes(record.origin+match),match);
+  assert.equal(script.matches.includes(record.origin+'/*'),false);assert.equal(script.allFrames,false);
+  assert.equal(fs.readFileSync(path.join(base,'entry-system.js'),'utf8').includes('CogGraphitePreloaded'),false);
+  assert.equal(fs.readFileSync(path.join(base,'entry-dark.js'),'utf8').includes('CogGraphitePreloaded'),false);
+  const key=sites.preferenceKey(record.origin);h.data[key]={mode:'dark'};h.events.storage({[key]:{newValue:h.data[key]}},'local');await flush();
+  assert.equal(h.registered.get(id).js[0],'entry-dark.js');
+  h.data[key]={mode:'native'};h.events.storage({[key]:{newValue:h.data[key]}},'local');await flush();assert.equal(h.registered.has(id),false);
+});
+
+test('an enabled site keeps its startup canvas on an entry route; a disabled one drops it',async()=>{
+  for(const enabled of [true,false]) {
+    const record=entry();record.enabled=enabled;const removed=[];
+    const environment={document:{documentElement:{removeAttribute(name){removed.push(name);}}},URL,CogGraphiteSites:sites,
+      location:{origin:record.origin,pathname:'/login'},addEventListener(){},navigation:{addEventListener(){}},
+      chrome:{runtime:{id:'extension',onMessage:{addListener(){}},async sendMessage(){return {ok:false};}},
+        storage:{local:{async get(){return {[sites.key]:[record]};}},onChanged:{addListener(){}}}}};
+    environment.window=environment;environment.top=environment;
+    vm.runInNewContext(fs.readFileSync(path.join(base,'bootstrap.js'),'utf8'),environment);await flush();
+    assert.equal(removed.includes('data-cg-startup'),!enabled);
+  }
+});
+
 test('paused and removed trial sites cannot retain a startup canvas registration',async()=>{
   const h=workerHarness(),record=(await h.send({type:'SITES_LIST'})).sites[0];h.events.startup();await flush();
   assert.ok(h.registered.has(sites.registrationId(record.origin)+'-startup'));
@@ -183,4 +211,10 @@ test('registered scripts share storage reads and supersede an in-flight worker a
   resolveRead({[sites.key]:[record]});await resumed;
   assert.equal(started,1);assert.equal(requests.length,1);
   assert.equal(environment.CogGraphiteGate.prepare(record,staleToken),false,'late worker cannot replace local session');
+});
+
+test('regional cognigy-* tenants share one nicecxone grant; other hosts keep their own',()=>{
+  for(const host of ['cognigy-au1','cognigy-eu','cognigy-use2'])assert.equal(sites.grant('https://'+host+'.nicecxone.com'),'https://*.nicecxone.com/*');
+  for(const origin of ['https://tenant.example.com','https://app.nicecxone.com','https://cognigy-au1.nicecxone.com.evil.test','https://cognigy-.nicecxone.com'])assert.equal(sites.grant(origin),origin+'/*',origin);
+  assert.equal(sites.pattern('https://cognigy-au1.nicecxone.com'),'https://cognigy-au1.nicecxone.com/*','scripts register per origin, never on the wildcard');
 });

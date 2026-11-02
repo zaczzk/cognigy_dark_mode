@@ -11,9 +11,23 @@
   function show(view) {
     for(const name of ['current','saved']){$('#'+name+'-view').hidden=name!==view;$('#view-'+name).setAttribute('aria-pressed',String(name===view));}notice('');
   }
+  // A regional tenant open in the active tab but not yet saved is offered in the list. Reads only the origin already fetched for this tab.
+  function suggest(saved) {
+    $('#suggest-card')?.remove();
+    if(saved||!sites.regional(current.origin))return;
+    const card=document.createElement('article');card.id='suggest-card';card.className='saved-card';
+    const top=document.createElement('div');top.className='saved-top';
+    const identity=document.createElement('div');identity.className='site-identity';
+    const title=document.createElement('h2');title.textContent=new URL(current.origin).hostname;identity.append(title);
+    const controls=document.createElement('div');controls.className='saved-controls';
+    const add=document.createElement('button');add.textContent='Enable';add.disabled=busy;add.setAttribute('aria-label','Enable '+title.textContent);
+    add.addEventListener('click',()=>enable(current));controls.append(add);
+    top.append(identity,badge('Not added','paused'));card.append(top,controls);$('#saved-list').prepend(card);$('#empty-sites').hidden=true;
+  }
   function renderCurrent() {
     if(!current)return;
     const saved=entries.find(e=>e.origin===current.origin);
+    suggest(saved);
     const hostname=new URL(current.origin).hostname;
     $('#host').textContent=hostname;$('#site-initial').textContent=hostname[0].toUpperCase();
     $('#application-path').textContent=saved?.basePath||current.basePath||'Cognigy application';
@@ -63,7 +77,7 @@
     if(busy)return;busy=true;notice('');$('#add-error').textContent='';
     fromCurrent=fromCurrent||!!(recognized&&current?.origin===profile.origin&&documentId);
     // This request must stay directly in the click/submit gesture.
-    const grant=chrome.permissions.request({origins:[sites.pattern(profile.origin)]});
+    const grant=chrome.permissions.request({origins:[sites.grant(profile.origin)]});
     try {
       if(!await grant)throw new Error('Permission wasn’t granted. Try again when ready.');
       await call({type:'SITE_ENABLE',origin:profile.origin,basePath:profile.basePath,...(fromCurrent?{tabId,documentId}:{})});

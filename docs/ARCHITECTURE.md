@@ -11,6 +11,7 @@ manifest.json
 
 worker.js ── registers per-site scripts with chrome.scripting ──▶ on approved app routes:
    startup-{dark|system}.js + startup.css   paint the app canvas and existing narrow startup structures
+   entry-{dark|system}.js + startup.css     canvas only on / and /login, so the redirect into the app does not flash white
    sites.js, bootstrap.js, build.js, core.js, adapters.js, content.js
    palette.css, application.css
 

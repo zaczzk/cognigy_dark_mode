@@ -1,103 +1,68 @@
 # Cognigy Graphite
 
-**Dark mode for Cognigy.AI.** Colours change. Your layout, controls and media stay familiar.
+A dark theme for Cognigy.AI, as a Chrome extension. Only colours change; layout, controls and images stay the same.
 
 [![CI](https://github.com/zaczzk/cognigy_dark_mode/actions/workflows/ci.yml/badge.svg)](https://github.com/zaczzk/cognigy_dark_mode/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/zaczzk/cognigy_dark_mode)](https://github.com/zaczzk/cognigy_dark_mode/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Preview · Chrome 120+**
-
-[Install](#install) · [Use it](#use-it) · [Troubleshooting](#troubleshooting) · [Contribute](#contribute)
+Preview release. Needs Chrome 120 or newer.
 
 ## Install
 
-### Quick install (recommended)
+1. Download the `.zip` from the [latest release](https://github.com/zaczzk/cognigy_dark_mode/releases/latest) (not `receipt.json`).
+2. Unzip it to a folder you'll keep.
+3. In Chrome, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the folder that contains `manifest.json`.
+4. Pin the Graphite icon to your toolbar.
 
-1. Download the latest `cognigy-graphite-*-release.zip` from [Releases](https://github.com/zaczzk/cognigy_dark_mode/releases/latest).
-2. Unzip it into a permanent folder.
-3. In Chrome, open `chrome://extensions` and turn on **Developer mode** (top right).
-4. Click **Load unpacked** and select the unzipped folder.
-5. Pin the Graphite icon to your toolbar.
-
-### From source
-
-1. `git clone https://github.com/zaczzk/cognigy_dark_mode.git`
-2. In `chrome://extensions` → **Load unpacked** → select the repository's **`extension/`** folder.
+**To update:** unzip the new release over the same folder, click **Reload** on `chrome://extensions`, then refresh your Cognigy tabs. (Cloned the repo instead? Run `git pull`.)
 
 ## Use it
 
-The toolbar popup follows your system theme: **Ink** in dark mode, **Paper** in light mode.
+`trial.cognigy.ai` works straight away. For any other Cognigy site, including NiCE-hosted ones like `cognigy-au1.nicecxone.com`:
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/popup-ink.png">
-  <img alt="Graphite popup in Paper (light): current site with Dark applied, a new site ready to enable, and the saved sites list" src="docs/images/popup-paper.png">
-</picture>
+1. Open the site in a tab and click the Graphite icon.
+2. Click **Enable on this site** and approve access. Chrome asks once for all `cognigy-<region>.nicecxone.com` sites; later ones need no prompt.
 
-<details><summary>Both themes</summary>
-
-**Ink (dark)**
-
-![Graphite popup in Ink (dark)](docs/images/popup-ink.png)
-
-**Paper (light)**
-
-![Graphite popup in Paper (light)](docs/images/popup-paper.png)
-
-</details>
+Then pick how it looks:
 
 | Mode | Result |
 |---|---|
-| **System** | Follows your system's light/dark preference. |
-| **Dark** | Keeps Cognigy dark. |
-| **Original** | Restores Cognigy's native colours. |
+| **System** | Matches your computer's light or dark setting. |
+| **Dark** | Always dark. |
+| **Original** | Cognigy's normal colours. |
 
-**Higher contrast:** a switch in the popup strengthens text, icons, borders and focus rings, in the popup and on every enabled Cognigy site. Surfaces keep the same graphite palette.
+**Higher contrast** makes text, icons and borders stand out more. Pause or remove saved sites under **Your applications**.
 
-**Trial:** `trial.cognigy.ai` is enabled by default.
-
-**Another Cognigy host:** open the popup → **Enable on this site** → approve access to that hostname.
-
-**Saved sites:** add, pause, enable or remove hosts. An optional path prefix supports apps hosted under a subpath.
+![Graphite popup](docs/images/popup-paper.png)
 
 ## What it covers
 
-- **Authoring:** flows, inspector, AI Agents, Knowledge, settings, Simulator, Trainer and resource lists.
-- **Admin Center** and **Insights**.
-- **Project index** and dashboard.
+Flows, AI Agents, Knowledge, Simulator, Trainer, settings, Admin Center, Insights and the project list. Only `/projects`, `/project/…`, `/admincenter` and `/insights` pages are recoloured. Anything not yet themed keeps Cognigy's normal colours.
 
-Recognised components receive the graphite palette. Unsupported or unexpected components keep their native colours.
-
-**Still a preview.** See [checked screens and known gaps](docs/COVERAGE.md) or the [latest verification record](docs/STATUS-2026-10-29.md).
-
-## Update
-
-- **From zip:** Replace the folder contents with the new release zip.
-- **From git:** Run `git pull`.
-- Then open `chrome://extensions` → click ⟳ **Reload** on Graphite → reload any open Cognigy tabs.
+Still a preview. See the [known gaps](docs/COVERAGE.md).
 
 ## Troubleshooting
 
 | You see… | Do this |
 |---|---|
-| No icon in toolbar | Click the Chrome puzzle piece icon (Extensions) and pin **Cognigy Graphite**. |
+| No toolbar icon | Click the puzzle-piece menu and pin **Cognigy Graphite**. |
 | **Reload this page to connect** | Reload the Cognigy tab. |
-| A light page in **System** mode | Check your system preference. Choose **Dark** for an always-dark theme. |
-| A white component in **Dark** mode | It may be unsupported. [Report the screen and interaction](https://github.com/zaczzk/cognigy_dark_mode/issues). |
-| **Partly supported** | Normal status. The route has supported components; only unrecognized elements stay native. |
-
-Include the extension version and steps to reproduce. Keep account details and captures private.
+| Light page in **System** mode | Your computer is set to light. Choose **Dark**. |
+| **Dark · some areas kept original** | Normal. A few parts aren't themed yet. |
+| Something is still white in **Dark** | [Report it](https://github.com/zaczzk/cognigy_dark_mode/issues) with the version and steps. Leave out private data. |
+| Can't turn on Developer mode | Your organisation's Chrome policy blocks it. Ask your IT team. |
 
 ## Privacy
 
 - No network requests, analytics or remote code.
-- Saves approved hostnames, optional path prefixes and appearance choices locally.
-- Never stores page content, input values or record IDs.
-- Required permissions: `storage`, `activeTab`, `scripting`, plus `trial.cognigy.ai`. Other hosts are granted individually.
+- Saves only your site list and appearance choices, on your computer.
+- Never stores page content or what you type.
+- Permissions: `storage`, `activeTab`, `scripting` and `trial.cognigy.ai`. Other sites are granted only when you enable them.
 
 ## Contribute
 
-**Node 22+ and Chrome.** No npm install or bundler.
+Needs Node 22+, Chrome, and Python 3.10+ for packaging. No install step.
 
 ```bash
 node --test "tests/*.test.cjs"
@@ -105,12 +70,12 @@ node tests/browser/build.cjs
 node tests/browser/run-headless.cjs
 ```
 
-CI checks PRs and pushes to `main`, validating unit tests, browser contracts, and generating installable extension zip artifacts. Tagged releases automatically generate GitHub Releases with signed hash receipts.
+To run from source, load the repo's `extension/` folder as above. CI tests every PR and `main`. Tagged releases publish a zip with SHA-256 checksums.
 
-**Rules:** colours only, exact Original restoration, no media filters, no new permissions or network calls. Private captures stay local.
+**Rules:** change colours only, keep Original identical to stock Cognigy, no image filters, no new permissions or network calls.
 
 [Contributor guide](CONTRIBUTING.md) · [Architecture](docs/ARCHITECTURE.md) · [Agent instructions](AGENTS.md)
 
-## License & affiliation
+## License
 
-[MIT](LICENSE). The popup bundles [Be Vietnam Pro](extension/fonts/OFL.txt) under the SIL Open Font License 1.1. Unofficial community project, unaffiliated with NiCE Cognigy. "Cognigy" is its owner's trademark and describes compatibility.
+[MIT](LICENSE). Uses the [Be Vietnam Pro](extension/fonts/OFL.txt) font (OFL). Unofficial community project, not affiliated with NiCE Cognigy. "Cognigy" is its owner's trademark.

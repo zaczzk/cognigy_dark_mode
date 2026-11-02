@@ -6,10 +6,12 @@
   const sites=CogGraphiteSites;
   try{if(sites.address(location.origin,'').origin!==location.origin)return;}catch{return;}
   let entry=null,token=0,pending=null,disposed=false,readGeneration=0,syncRead=null;
-  const stop=()=>{token++;pending=null;globalThis.CogGraphiteController?.destroy();document.documentElement?.removeAttribute('data-cg-startup');delete globalThis.CogGraphiteSession;};
+  const stop=keepCanvas=>{token++;pending=null;globalThis.CogGraphiteController?.destroy();if(!keepCanvas)document.documentElement?.removeAttribute('data-cg-startup');delete globalThis.CogGraphiteSession;};
   const eligible=()=>!disposed&&entry?.enabled&&sites.logicalPath(location,entry)!==null;
   function start() {
-    if(!eligible()){stop();return Promise.resolve({ok:false});}
+    // An enabled site on an entry route (/, /login) keeps its startup canvas so
+    // the client-side redirect into the app does not flash native white.
+    if(!eligible()){stop(!disposed&&entry?.enabled===true);return Promise.resolve({ok:false});}
     if(globalThis.CogGraphiteController){globalThis.CogGraphiteController.route();return Promise.resolve({ok:true});}
     if(globalThis.CogGraphitePreloaded&&!globalThis.CogGraphiteStart)return Promise.resolve({ok:false});
     // Chrome has already delivered this bundle and its CSS on an approved app

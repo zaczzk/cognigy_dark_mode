@@ -81,7 +81,7 @@ Never call `own` from an adapter.
 
 ### Debugging
 
-The popup shows only a status label. "Partly supported" appears on every project or workspace route, so on its own it does **not** mean a family was refused. To see real refusals, open DevTools on the popup (right-click the popup → Inspect) and run `chrome.tabs.sendMessage(<tabId>,{type:'GET_STATUS',requestId:1})`. The response includes `refusedFamilies`, `activeFamilies` and `reasonCodes`. Remove all diagnostics before finishing.
+The popup shows only a status label. "Dark · some areas kept original" appears on every project or workspace route, so on its own it does **not** mean a family was refused. To see real refusals, open DevTools on the popup (right-click the popup → Inspect) and run `chrome.tabs.sendMessage(<tabId>,{type:'GET_STATUS',requestId:1})`. The response includes `refusedFamilies`, `activeFamilies` and `reasonCodes`. Remove all diagnostics before finishing.
 
 ## Never commit
 
