@@ -10,7 +10,7 @@ Preview release. Needs Chrome 120 or newer.
 
 ## Install
 
-1. Download the `.zip` from the [latest release](https://github.com/zaczzk/cognigy_dark_mode/releases/latest) (not `receipt.json`).
+1. Download the `.zip` from the [latest release](https://github.com/zaczzk/cognigy_dark_mode/releases/latest).
 2. Unzip it to a folder you'll keep.
 3. In Chrome, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the folder that contains `manifest.json`.
 4. Pin the Graphite icon to your toolbar.
