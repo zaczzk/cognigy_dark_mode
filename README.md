@@ -22,7 +22,7 @@ Preview release. Needs Chrome 120 or newer.
 `trial.cognigy.ai` works straight away. For any other Cognigy site, including NiCE-hosted ones like `cognigy-au1.nicecxone.com`:
 
 1. Open the site in a tab and click the Graphite icon.
-2. Click **Enable on this site** and approve access. Chrome asks once for all `cognigy-<region>.nicecxone.com` sites; later ones need no prompt.
+2. Click **Enable on this site** and approve access. For NiCE-hosted sites, Chrome asks once for `*.nicecxone.com`, so later regions need no prompt. The theme still runs only on sites you enable.
 
 It starts in **System** mode, so Cognigy follows your computer's light or dark setting. To change that:
 
@@ -58,7 +58,7 @@ Still a preview. See the [known gaps](docs/COVERAGE.md).
 - No network requests, analytics or remote code.
 - Saves only your site list and appearance choices, on your computer.
 - Never stores page content or what you type.
-- Permissions: `storage`, `activeTab`, `scripting` and `trial.cognigy.ai`. Other sites are granted only when you enable them.
+- Permissions: `storage`, `activeTab`, `scripting` and `trial.cognigy.ai`. Other sites are granted only when you enable them. See the [privacy policy](PRIVACY.md).
 
 ## Contribute
 

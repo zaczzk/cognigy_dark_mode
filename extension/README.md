@@ -5,7 +5,7 @@ A colour-only dark theme for the Cognigy.AI web app. Layout, typography, images 
 ## Use
 
 - Click the toolbar icon on a Cognigy tab and choose **System** (follow Chrome's light/dark preference), **Dark** or **Original**.
-- `trial.cognigy.ai` is enabled by default. On any other Cognigy host, click **Enable on this site**. Chrome asks for permission for that one hostname.
+- `trial.cognigy.ai` is enabled by default. On any other Cognigy host, click **Enable on this site**. Chrome asks for permission for that hostname; for NiCE-hosted `cognigy-<region>.nicecxone.com` sites it asks once for `*.nicecxone.com`.
 - **Saved sites** lists every enrolled host, with **Pause**, **Enable**, **Remove** and **Add site**. Add site accepts an optional application path prefix.
 
 ## Scope
@@ -16,7 +16,7 @@ A colour-only dark theme for the Cognigy.AI web app. Layout, typography, images 
 
 ## Privacy
 
-- **Permissions:** `storage`, `activeTab` and `scripting`, plus `trial.cognigy.ai`. Other hosts are granted individually.
+- **Permissions:** `storage`, `activeTab` and `scripting`, plus `trial.cognigy.ai`. Other hosts are granted when you enable them.
 - No network requests, analytics, remote code or browsing history.
 - Only enrolled hostnames, path prefixes and appearance choices are stored, locally.
 

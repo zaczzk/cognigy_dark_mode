@@ -74,6 +74,9 @@ jobs:
           VERSION=$(node -p "require('./extension/manifest.json').version")
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Detected extension version: ${VERSION}"
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref_name }}" != "v${VERSION}" ]; then
+            echo "::error::Tag ${{ github.ref_name }} does not match manifest version v${VERSION}"; exit 1
+          fi
 
       - name: Package extension candidate
         id: package
@@ -123,12 +126,18 @@ jobs:
     steps:
       - name: Check Chrome Web Store credentials
         id: check-creds
+        env:
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        # Only tag pushes upload; the store rejects a version it has already seen.
         run: |
-          if [ -n "${{ secrets.CHROME_CLIENT_ID }}" ] && [ -n "${{ secrets.CHROME_EXTENSION_ID }}" ]; then
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "$EXTENSION_ID" ] && [ -n "$CLIENT_ID" ] && [ -n "$CLIENT_SECRET" ] && [ -n "$REFRESH_TOKEN" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "Chrome Web Store secrets not configured; skipping upload step."
+            echo "Not a tag push, or Chrome Web Store secrets not configured; skipping upload."
           fi
 
       - name: Download release artifact
@@ -154,4 +163,5 @@ jobs:
           client-id: ${{ secrets.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          publish: true
+          # Upload as a draft; submit for review in the developer dashboard.
+          publish: false
