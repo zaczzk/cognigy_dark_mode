@@ -2,19 +2,28 @@
 
 **Dark mode for Cognigy.AI.** Colours change. Your layout, controls and media stay familiar.
 
-**Preview · 0.14.100 · Chrome 120+**
+[![CI](https://github.com/zaczzk/cognigy_dark_mode/actions/workflows/ci.yml/badge.svg)](https://github.com/zaczzk/cognigy_dark_mode/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/zaczzk/cognigy_dark_mode)](https://github.com/zaczzk/cognigy_dark_mode/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+**Preview · Chrome 120+**
 
 [Install](#install) · [Use it](#use-it) · [Troubleshooting](#troubleshooting) · [Contribute](#contribute)
 
 ## Install
 
-1. Download this repository: **Code → Download ZIP**. Unzip it.
-2. Open `chrome://extensions` in Chrome.
-3. Turn on **Developer mode**.
-4. Click **Load unpacked**. Select the repository's **`extension/`** folder.
-5. Open Cognigy. Click the Graphite toolbar icon.
+### Quick install (recommended)
 
-**Already cloned it?** Load the same `extension/` folder.
+1. Download the latest `cognigy-graphite-*-release.zip` from [Releases](https://github.com/zaczzk/cognigy_dark_mode/releases/latest).
+2. Unzip it into a permanent folder.
+3. In Chrome, open `chrome://extensions` and turn on **Developer mode** (top right).
+4. Click **Load unpacked** and select the unzipped folder.
+5. Pin the Graphite icon to your toolbar.
+
+### From source
+
+1. `git clone https://github.com/zaczzk/cognigy_dark_mode.git`
+2. In `chrome://extensions` → **Load unpacked** → select the repository's **`extension/`** folder.
 
 ## Use it
 
@@ -63,20 +72,19 @@ Recognised components receive the graphite palette. Unsupported or unexpected co
 
 ## Update
 
-1. Pull or download the latest source.
-2. Open `chrome://extensions` → **Reload** Graphite.
-3. **Reload every open Cognigy tab.**
-
-Keep using the same extension folder to preserve its identity and settings.
+- **From zip:** Replace the folder contents with the new release zip.
+- **From git:** Run `git pull`.
+- Then open `chrome://extensions` → click ⟳ **Reload** on Graphite → reload any open Cognigy tabs.
 
 ## Troubleshooting
 
 | You see… | Do this |
 |---|---|
+| No icon in toolbar | Click the Chrome puzzle piece icon (Extensions) and pin **Cognigy Graphite**. |
 | **Reload this page to connect** | Reload the Cognigy tab. |
 | A light page in **System** mode | Check your system preference. Choose **Dark** for an always-dark theme. |
 | A white component in **Dark** mode | It may be unsupported. [Report the screen and interaction](https://github.com/zaczzk/cognigy_dark_mode/issues). |
-| **Partly supported** | This label alone does not mean a component failed or remains white. |
+| **Partly supported** | Normal status. The route has supported components; only unrecognized elements stay native. |
 
 Include the extension version and steps to reproduce. Keep account details and captures private.
 
