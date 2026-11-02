@@ -1,0 +1,150 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name for release (e.g. v0.14.100)'
+        required: false
+        type: string
+      draft:
+        description: 'Create draft release'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Create pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Google Chrome
+        uses: browser-actions/setup-chrome@v1
+        id: chrome
+
+      - name: Run unit tests
+        run: node --test "tests/*.test.cjs"
+
+      - name: Build browser fixtures
+        run: node tests/browser/build.cjs
+
+      - name: Run browser contracts
+        run: node tests/browser/run-headless.cjs "${{ steps.chrome.outputs.chrome-path }}"
+
+  release:
+    name: Package and Publish Release
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      zip_path: ${{ steps.package.outputs.zip_path }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Read manifest version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./extension/manifest.json').version")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Detected extension version: ${VERSION}"
+
+      - name: Package extension candidate
+        id: package
+        run: |
+          python3 scripts/package-extension.py --label release
+          ZIP_FILE=$(ls releases/release/*.zip | head -n 1)
+          echo "zip_path=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
+          echo "Packaged zip: ${ZIP_FILE}"
+
+      - name: Upload release artifact to workflow run
+        uses: actions/upload-artifact@v4
+        with:
+          name: cognigy-graphite-release
+          path: |
+            releases/release/*.zip
+            releases/release/receipt.json
+          retention-days: 30
+
+      - name: Determine tag name
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          elif [ -n "${{ github.ref_name }}" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="v${{ steps.version.outputs.version }}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Cognigy Graphite ${{ steps.tag.outputs.tag }}
+          files: |
+            releases/release/*.zip
+            releases/release/receipt.json
+          draft: ${{ github.event.inputs.draft || false }}
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
+
+  publish-cws:
+    name: Publish to Chrome Web Store (Optional)
+    needs: [test, release]
+    runs-on: ubuntu-latest
+    if: env.CHROME_CLIENT_ID != '' && env.CHROME_EXTENSION_ID != ''
+    env:
+      CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+      CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cognigy-graphite-release
+          path: artifacts
+
+      - name: Locate zip file
+        id: locate
+        run: |
+          ZIP_FILE=$(ls artifacts/*.zip | head -n 1)
+          echo "file_path=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload & Publish to Chrome Web Store
+        uses: mnao305/chrome-extension-upload@v5.0.0
+        with:
+          file-path: ${{ steps.locate.outputs.file_path }}
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          publish: true

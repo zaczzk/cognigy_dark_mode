@@ -97,7 +97,7 @@ node tests/browser/build.cjs
 node tests/browser/run-headless.cjs
 ```
 
-CI checks PRs and pushes to `main`.
+CI checks PRs and pushes to `main`, validating unit tests, browser contracts, and generating installable extension zip artifacts. Tagged releases automatically generate GitHub Releases with signed hash receipts.
 
 **Rules:** colours only, exact Original restoration, no media filters, no new permissions or network calls. Private captures stay local.
 

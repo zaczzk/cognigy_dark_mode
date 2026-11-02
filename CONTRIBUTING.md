@@ -71,11 +71,38 @@ The capture script strips scripts, input values, iframes, video and editor text,
 - [ ] Images, avatars and editor content are untouched
 - [ ] No captures, screenshots or diagnostics committed
 
+## CI/CD and Automation
+
+GitHub Actions automates continuous testing, package builds, and releases:
+
+- **CI (`.github/workflows/ci.yml`)**:
+  - Runs on every push to `main` and on pull requests.
+  - Executes unit tests (`node --test "tests/*.test.cjs"`) on Node 22.
+  - Runs headless browser tests against Google Chrome.
+  - Freezes and validates candidate packaging (`python3 scripts/package-extension.py --label ci`).
+  - Uploads the packaged extension zip artifact for immediate review and testing.
+- **Release (`.github/workflows/release.yml`)**:
+  - Triggers on tag pushes matching `v*` (e.g. `git tag v0.14.100 && git push origin v0.14.100`) or via manual `workflow_dispatch`.
+  - Runs full unit and browser test suites.
+  - Packages the frozen release zip archive and SHA-256 hash receipt (`receipt.json`).
+  - Automatically creates a GitHub Release with changelog notes and attaches the zip archive and receipt.
+  - *(Optional)* Deploys to the Chrome Web Store if repository secrets `CHROME_EXTENSION_ID`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, and `CHROME_REFRESH_TOKEN` are configured.
+
 ## Releasing (maintainers)
 
+Automated release:
+1. Bump the version in `extension/manifest.json` on `main`.
+2. Tag and push:
+   ```bash
+   git tag v0.14.100
+   git push origin v0.14.100
+   ```
+   The `Release` GitHub Action handles testing, packaging, and publishing the release assets.
+
+Manual local release / verification:
 ```bash
 python scripts/package-extension.py --label <short-label>
 python scripts/stage-chrome-development.py --release <short-label>
 ```
 
-Bump the version first. Then freeze `releases/<label>/` (zip plus hash receipt), stage it to the stable dev install, verify it in the live app, and attach the zip to a GitHub release. Keep at most two local release checkpoints.
+Freeze `releases/<label>/` (zip plus hash receipt), stage it to the stable dev install, verify it in the live app, and attach the zip to a GitHub release. Keep at most two local release checkpoints.

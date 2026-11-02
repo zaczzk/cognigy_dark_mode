@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run unit tests
+        run: node --test "tests/*.test.cjs"
+
+  browser:
+    name: Headless Browser Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Google Chrome
+        uses: browser-actions/setup-chrome@v1
+        id: chrome
+
+      - name: Build browser fixtures
+        run: node tests/browser/build.cjs
+
+      - name: Run browser contracts
+        run: node tests/browser/run-headless.cjs "${{ steps.chrome.outputs.chrome-path }}"
+
+  package:
+    name: Package Extension & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Freeze candidate package
+        run: python3 scripts/package-extension.py --label ci
+
+      - name: Upload packaged extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cognigy-graphite-ci-build
+          path: |
+            releases/ci/*.zip
+            releases/ci/receipt.json
+          if-no-files-found: error
+          retention-days: 14
