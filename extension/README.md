@@ -1,4 +1,4 @@
-# Cognigy Graphite
+# (Unofficial) Cognigy Dark Mode
 
 A colour-only dark theme for the Cognigy.AI web app. Layout, typography, images and shadows are unchanged. This is an unofficial project and is not affiliated with NiCE Cognigy.
 

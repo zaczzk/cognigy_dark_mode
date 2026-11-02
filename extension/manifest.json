@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Cognigy Graphite",
+  "name": "(Unofficial) Cognigy Dark Mode",
   "version": "0.14.101",
-  "description": "Graphite colours for Cognigy, preserving native layout, images and depth.",
+  "description": "Unofficial dark theme for Cognigy.AI. Only colours change; layout and images stay the same.",
   "minimum_chrome_version": "120",
   "permissions": [
     "storage",
@@ -20,7 +20,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Cognigy Graphite",
+    "default_title": "(Unofficial) Cognigy Dark Mode",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png"

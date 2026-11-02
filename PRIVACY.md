@@ -1,6 +1,6 @@
 # Privacy policy
 
-Cognigy Graphite is a Chrome extension that changes the colours of the Cognigy.AI web app. It is an unofficial project, not affiliated with NiCE Cognigy.
+(Unofficial) Cognigy Dark Mode is a Chrome extension that changes the colours of the Cognigy.AI web app. It is an unofficial project, not affiliated with NiCE Cognigy.
 
 ## What it collects
 

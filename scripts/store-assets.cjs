@@ -21,7 +21,7 @@ const assets={
   'screenshot-1-dark.jpg':shot('Dark mode for Cognigy.AI','Only colours change. Layout, controls and images stay the same.','docs/images/popup-ink.png'),
   'screenshot-2-light.jpg':shot('Follows your system by default','System, Dark or Original, per site. Enable any Cognigy site in one click.','docs/images/popup-paper.png'),
   'promo-small-440x280.jpg':page(440,280,`<div style="padding:34px 32px"><img src="${uri('extension/icons/icon-128.png')}" width=64 height=64 style="border-radius:16px">
-<h1 style="font-size:30px;margin-top:22px">${name}</h1><p style="font-size:17px;margin-top:6px">Dark mode for Cognigy.AI</p></div>`)
+<h1 style="font-size:26px;margin-top:22px">${name}</h1><p style="font-size:17px;margin-top:6px">Dark mode for Cognigy.AI</p></div>`)
 };
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const json=url=>new Promise((ok,fail)=>http.get(url,res=>{let d='';res.on('data',c=>d+=c);res.on('end',()=>{try{ok(JSON.parse(d));}catch(e){fail(e);}});}).on('error',fail));

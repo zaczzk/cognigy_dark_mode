@@ -1,4 +1,4 @@
-# Cognigy Graphite
+# (Unofficial) Cognigy Dark Mode
 
 A dark theme for Cognigy.AI, as a Chrome extension. Only colours change; layout, controls and images stay the same.
 
@@ -13,7 +13,7 @@ Preview release. Needs Chrome 120 or newer.
 1. Download the `.zip` from the [latest release](https://github.com/zaczzk/cognigy_dark_mode/releases/latest).
 2. Unzip it to a folder you'll keep.
 3. In Chrome, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked**, and pick the folder that contains `manifest.json`.
-4. Pin the Graphite icon to your toolbar.
+4. Pin the extension icon to your toolbar.
 
 **To update:** unzip the new release over the same folder, click **Reload** on `chrome://extensions`, then refresh your Cognigy tabs. (Cloned the repo instead? Run `git pull`.)
 
@@ -21,7 +21,7 @@ Preview release. Needs Chrome 120 or newer.
 
 `trial.cognigy.ai` works straight away. For any other Cognigy site, including NiCE-hosted ones like `cognigy-au1.nicecxone.com`:
 
-1. Open the site in a tab and click the Graphite icon.
+1. Open the site in a tab and click the extension icon.
 2. Click **Enable on this site** and approve access. For NiCE-hosted sites, Chrome asks once for `*.nicecxone.com`, so later regions need no prompt. The theme still runs only on sites you enable.
 
 It starts in **System** mode, so Cognigy follows your computer's light or dark setting. To change that:
@@ -34,7 +34,7 @@ It starts in **System** mode, so Cognigy follows your computer's light or dark s
 
 **Higher contrast** makes text, icons and borders stand out more. Pause or remove saved sites under **Your applications**.
 
-![Graphite popup](docs/images/popup-paper.png)
+![Extension popup](docs/images/popup-paper.png)
 
 ## What it covers
 
@@ -46,7 +46,7 @@ Still a preview. See the [known gaps](docs/COVERAGE.md).
 
 | You see… | Do this |
 |---|---|
-| No toolbar icon | Click the puzzle-piece menu and pin **Cognigy Graphite**. |
+| No toolbar icon | Click the puzzle-piece menu and pin **(Unofficial) Cognigy Dark Mode**. |
 | **Reload this page to connect** | Reload the Cognigy tab. |
 | Light page in **System** mode | Your computer is set to light. Choose **Dark**. |
 | **Dark · some areas kept original** | Normal. A few parts aren't themed yet. |

@@ -4,10 +4,10 @@ Copy these into the [developer dashboard](https://chrome.google.com/webstore/dev
 
 ## Store listing tab
 
-**Name** comes from `manifest.json` (`Cognigy Graphite`). See *Before you submit* about the name.
+**Name** comes from `manifest.json`: `(Unofficial) Cognigy Dark Mode`.
 
-**Summary** (from the manifest, 73 characters):
-> Graphite colours for Cognigy, preserving native layout, images and depth.
+**Summary** (from the manifest, 91 characters):
+> Unofficial dark theme for Cognigy.AI. Only colours change; layout and images stay the same.
 
 **Category:** Developer Tools
 
@@ -58,10 +58,8 @@ Copy these into the [developer dashboard](https://chrome.google.com/webstore/dev
 
 ## Before you submit (owner only)
 
-1. **Publisher.** Decide whether this ships under a personal account or a NiCE group publisher. An official NiCE publisher avoids trademark and impersonation questions.
-2. **Name.** A name that starts with someone else's trademark can be flagged as impersonation. Consider renaming `name` and `default_title` in `manifest.json` to something like `Graphite: dark theme for Cognigy`. This needs a new version.
-3. **Account setup.** Register as a developer and pay the one-time $5 fee. Turn on 2-step verification, verify the contact email, and complete the trader or non-trader declaration.
-4. **Upload.** Upload the release zip, fill in the fields above, add the graphics, and set visibility. Public is fine, or choose Unlisted to test with your team first. Then submit for review.
+1. **Account setup.** Register as a developer and pay the one-time $5 fee. Turn on 2-step verification, verify the contact email, and complete the trader or non-trader declaration.
+2. **Upload.** Upload the release zip, fill in the fields above, add the graphics, and set visibility. Public is fine, or choose Unlisted to test with your team first. Then submit for review.
 
 ## Automated uploads after the first release
 
