@@ -30,7 +30,7 @@ Copy these into the [developer dashboard](https://chrome.google.com/webstore/dev
 
 **Graphics:**
 - **Store icon:** `extension/icons/icon-128.png`.
-- **Screenshots** (1 required, up to 5, 1280×800 PNG or JPEG) and **small promo tile** (440×280, required): run `node scripts/store-assets.cjs`. It writes them to `store-assets/`, which stays out of git.
+- **Screenshots** (1 required, up to 5, 1280×800 PNG or JPEG) and **small promo tile** (440×280, required): run `node scripts/store-assets.cjs`. It renders the popup from the real UI with sample sites, refreshes `docs/images/popup-*.png`, and writes the store graphics to `store-assets/`, which stays out of git.
 - **Real screenshot:** add at least one of a Cognigy screen in Dark mode, from an account with no customer data. A listing with only popup images may be rejected for not showing what the extension does.
 
 ## Privacy practices tab
