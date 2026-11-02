@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "(Unofficial) Cognigy Dark Mode",
-  "version": "0.14.101",
+  "version": "0.14.102",
   "description": "Unofficial dark theme for Cognigy.AI. Only colours change; layout and images stay the same.",
   "minimum_chrome_version": "120",
   "permissions": [
