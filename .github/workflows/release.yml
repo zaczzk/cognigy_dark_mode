@@ -120,26 +120,33 @@ jobs:
     name: Publish to Chrome Web Store (Optional)
     needs: [test, release]
     runs-on: ubuntu-latest
-    if: env.CHROME_CLIENT_ID != '' && env.CHROME_EXTENSION_ID != ''
-    env:
-      CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-      CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-      CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-      CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
     steps:
+      - name: Check Chrome Web Store credentials
+        id: check-creds
+        run: |
+          if [ -n "${{ secrets.CHROME_CLIENT_ID }}" ] && [ -n "${{ secrets.CHROME_EXTENSION_ID }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Chrome Web Store secrets not configured; skipping upload step."
+          fi
+
       - name: Download release artifact
+        if: steps.check-creds.outputs.configured == 'true'
         uses: actions/download-artifact@v4
         with:
           name: cognigy-graphite-release
           path: artifacts
 
       - name: Locate zip file
+        if: steps.check-creds.outputs.configured == 'true'
         id: locate
         run: |
           ZIP_FILE=$(ls artifacts/*.zip | head -n 1)
           echo "file_path=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
 
       - name: Upload & Publish to Chrome Web Store
+        if: steps.check-creds.outputs.configured == 'true'
         uses: mnao305/chrome-extension-upload@v5.0.0
         with:
           file-path: ${{ steps.locate.outputs.file_path }}
