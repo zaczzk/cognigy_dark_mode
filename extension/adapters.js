@@ -21,7 +21,10 @@
     // All qualification reads precede the commit below. These caches live for
     // one synchronous pass only; no native style survives a later mutation.
     const styles=new WeakMap(),animations=new WeakMap(),paints=new WeakMap(),safety=new WeakMap();
+    // Verified media islands (image tiles) stay native with their whole subtree.
+    const islands=[];
     const safe=el=>{
+      if(islands.some(island=>island.contains(el)))return false;
       if(!safety.has(el))safety.set(el,!el.closest(PROTECTED) && !el.closest(':disabled, [aria-disabled="true"], .Mui-disabled'));
       return safety.get(el);
     };
@@ -359,6 +362,12 @@
       if(wizard) {
         main=unique(wizard,':scope > [role="main"]');heading=main&&unique(main,'h1[id^="wizardMainContentHeader-"]');
         if(wizard.childElementCount!==2||!heading||!unique(wizard,':scope > [role="complementary"][aria-label="Project Creation Steps"]')){partial=true;return;}
+        // Project Type offers two image tiles with their own native ink.
+        if(heading.id==='wizardMainContentHeader-type') {
+          const tiles=Array.from(unique(main,'[role="group"][aria-labelledby="wizardMainContentHeader-type"]')?.querySelectorAll(':scope > div > div[role="button"]')||[]);
+          if(tiles.length!==2||tiles.some(tile=>!getComputedStyle(tile).backgroundImage.startsWith('url('))){partial=true;return;}
+          islands.push(...tiles);
+        }
         page=wizard;
       } else if(indexRoute) {
         heading=unique(app,'[data-test="AgentListHeader"] > h1#indexDashboardAgentListheader');main=unique(app,'#mainContent.contentAreaWithNews');
