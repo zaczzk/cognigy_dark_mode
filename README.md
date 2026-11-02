@@ -24,11 +24,11 @@ Preview release. Needs Chrome 120 or newer.
 1. Open the site in a tab and click the Graphite icon.
 2. Click **Enable on this site** and approve access. Chrome asks once for all `cognigy-<region>.nicecxone.com` sites; later ones need no prompt.
 
-Then pick how it looks:
+It starts in **System** mode, so Cognigy follows your computer's light or dark setting. To change that:
 
 | Mode | Result |
 |---|---|
-| **System** | Matches your computer's light or dark setting. |
+| **System** (default) | Matches your computer's light or dark setting. |
 | **Dark** | Always dark. |
 | **Original** | Cognigy's normal colours. |
 
