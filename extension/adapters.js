@@ -842,6 +842,10 @@
         goalBody.querySelectorAll('input.MuiInputBase-input[type="text"][required]').length===2&&
         goalBody.querySelectorAll('textarea.MuiInputBase-input:not([aria-hidden])').length===2&&
         unique(goalBody,'.MuiDialogActions-root > button[type="button"]')&&unique(goalBody,'.MuiDialogActions-root > div > button[type="submit"]'))utilityPage=goalPage;
+      // Create AI Agent: its named header, the six-step stepper and one step body.
+      const agentWizard=/^\/project\/[^/]+\/[^/]+\/ai-agents\/new\/?$/.test(loc.pathname)&&banner?.getAttribute('data-test')==='AI-Agent-Wizard'&&unique(banner,'h1#genericHeaderId');
+      const agentWizardMain=agentWizard&&unique(banner.parentElement,':scope > #mainContent');
+      if(agentWizardMain&&agentWizardMain.querySelectorAll('.MuiStepper-root > .MuiStep-root').length===6)utilityPage=banner.parentElement;
       if(flowRoute==='nlu') {
         const body=unique(app,'#flowNLUEditorTabContent[role="main"]');
         const selected=body&&unique(body,'[role="tab"][aria-selected="true"][id^="flowNLU"]');
@@ -879,6 +883,23 @@
             if(paintValue(button,'color')==='rgb(6, 28, 76)')plan(button,'data-cg-text','accent');else text(button);all(button,'span:not(:has(*)),svg').forEach(e=>text(e));
           });
           all(scenarioCreate,'p.MuiTypography-root').forEach(e=>{if(['rgb(48, 48, 48)','rgb(104, 104, 104)'].includes(paintValue(e,'color')))plan(e,'data-cg-text','secondary');});
+        }
+        if(agentWizardMain&&utilityPage===agentWizardMain.parentElement) {
+          all(banner,':scope > div').forEach(e=>{if(LIGHT.includes(paintValue(e,'backgroundColor')))surface(e,'shell');});
+          const picker=banner.querySelector('[data-test-id="AgentBadgeDropdownButton"]');
+          if(picker&&surface(picker.parentElement,'panel')){text(picker.parentElement);all(picker,'.MuiSvgIcon-root').forEach(e=>text(e,'icon'));}
+          all(agentWizardMain,':scope > div,:scope > div > div').forEach(e=>{if(LIGHT.includes(paintValue(e,'backgroundColor')))surface(e,'panel');});
+          sliders(agentWizardMain,['speakingStyle.completeness','speakingStyle.formality']);
+          for(const e of agentWizardMain.querySelectorAll('label.MuiFormLabel-root.Mui-disabled > span#label > p.MuiTypography-root:not(:has(*))'))if(!e.closest(PROTECTED)&&paintValue(e,'color')==='rgba(0, 0, 0, 0.38)'&&!e.style.getPropertyPriority('color'))plan(e,'data-cg-text','secondary');
+          for(const e of agentWizardMain.querySelectorAll('.MuiStepLabel-root.Mui-disabled .MuiStepLabel-label'))if(paintValue(e,'color')==='rgba(0, 0, 0, 0.54)'&&!e.style.getPropertyPriority('color'))plan(e,'data-cg-text','secondary');
+          all(agentWizardMain,'p.MuiTypography-root > i:not(:has(*))').forEach(e=>{if(paintValue(e,'color')==='rgb(104, 104, 104)')plan(e,'data-cg-text','secondary');});
+          all(agentWizardMain,'p.MuiTypography-root > div,p.MuiTypography-root > div *').forEach(e=>{if(paintValue(e,'color')==='rgb(244, 67, 54)')plan(e,'data-cg-text','error');});
+          // Job tiles keep their image icons on the native pale mat.
+          all(agentWizardMain,'ul > li').forEach(e=>{if(getComputedStyle(e).borderTopStyle==='solid'&&paintValue(e,'borderTopColor')==='rgb(227, 233, 248)')slot(e,'knowledge-border');});
+          all(agentWizardMain,'li div:has(> img:only-child)').forEach(e=>{if(paintValue(e,'backgroundColor')==='rgb(245, 246, 253)')slot(e,'native-media-mat');});
+          all(agentWizardMain,'button:not(.MuiButtonBase-root)').forEach(e=>{
+            if(LINK.includes(paintValue(e,'backgroundColor'))&&paintValue(e,'color')==='rgb(255, 255, 255)'&&getComputedStyle(e).backgroundImage==='none'){slot(e,'primary');plan(e,'data-cg-text','on-button');}
+          });
         }
         if(newGoal&&utilityPage===goalPage) {
           // The legacy Goal editor has no main/form identity. Its named header,
