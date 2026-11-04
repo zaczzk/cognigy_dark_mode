@@ -74,7 +74,9 @@
     const enabled=name=>!only||only.has(name);
     const plans=[];
     const boundaries=[];
-    const rejected=new Set();
+    const rejected=new Set(),refusalSites=new Map();
+    // Diagnostics only: remember the adapters.js line of each family's first refusal.
+    {const add=rejected.add.bind(rejected);rejected.add=f=>{if(!refusalSites.has(f))refusalSites.set(f,/:(\d+):\d+\)?$/.exec((new Error().stack||'').split('\n')[2]||'')?.[1]||'?');return add(f);};}
     const retryFamilies=new Set();
     const plan=(el,name,value)=>plans.push([el,name,value,family]);
     const slot=(el, value)=>{if(el && safe(el)) plan(el,'data-cg-slot',value);};
@@ -135,7 +137,7 @@
       });
       all(root,'.MuiInputBase-root, .c26-legacy-cognigy-text-input-row').forEach(e=>{
         if(family==='utility'&&e.closest('[data-test="IntentTrainerHeader"]')&&unique(e,'[role="button"][aria-haspopup="listbox"][aria-labelledby="filterPresetsId"]')&&surface(e,'primary',[...LINK,'rgb(6, 28, 76)']))return;
-        const agentEditable=family==='agents'&&e.matches('.c26-legacy-cognigy-text-input-row')&&
+        const agentEditable=e.matches('.c26-legacy-cognigy-text-input-row')&&
           unique(e,':scope > [data-test="CognigyTextEditableField"].c26-legacy-cognigy-text-editable');
         if(agentEditable&&!surface(agentEditable,'agent-editable',[TRANSPARENT,'rgb(236, 236, 237)']))rejected.add(family);
         const focusedAgent=['agents','settings','inspector','admin'].includes(family)&&e.matches('.MuiInputBase-root.MuiAutocomplete-inputRoot.Mui-focused')&&e.closest('[role="combobox"].Mui-focused');
@@ -145,9 +147,11 @@
         const goalStepField=family==='utility'&&loc.pathname.endsWith('/goal/new')&&root.matches('.MuiDialog-paper[role="dialog"]')&&unique(root,'input#field-completionStep[type="checkbox"]')&&e.matches('.MuiInputBase-root')&&unique(e,':scope > input[id="field-name"], :scope > textarea[id="field-description"], :scope > input[id="field-metrics.duration.unit"]');
         const focusedHandover=family==='inspector'&&loc.pathname.endsWith('/handover-providers')&&root.id==='editSidebarWrapper'&&unique(root,'[role="radiogroup"][aria-labelledby="tileSelectLabel"]')&&e.matches('.MuiInputBase-root.MuiInput-root.Mui-focused')&&unique(e,':scope > input#field-name.MuiInputBase-input');
         const focusedSlot=family==='inspector'&&root.id==='editSidebarWrapper'&&e.matches('.MuiInputBase-root.MuiInput-root.Mui-focused')&&(loc.pathname.endsWith('/nlu/slots-filler')&&unique(e,':scope > input.MuiInputBase-input[id^="field-"]')||(loc.pathname.endsWith('/flows')&&unique(root,'input#field-flowGenerationInput.MuiSelect-nativeInput')||loc.pathname.endsWith('/large-language-models')&&unique(root,'input#selectFielProvider')&&unique(root,'input#selectFieldModel')||loc.pathname.endsWith('/lexicons')&&unique(root,'input#field-generateEntries.MuiSwitch-input')||loc.pathname.endsWith('/nlu-connectors')&&unique(root,'[role="radiogroup"][aria-labelledby="tileSelectLabel"]')||['functions','playbooks'].includes(loc.pathname.split('/').pop())&&root.querySelectorAll('input,textarea,select').length===1||loc.pathname.endsWith('/snapshots')&&unique(root,'textarea#field-newDescription'))&&unique(e,':scope > input#field-newName.MuiInputBase-input, :scope > textarea#field-description.MuiInputBase-input, :scope > textarea#field-newDescription.MuiInputBase-input'));
+        // Native focus turns every Material field the same light grey; accept it for any single-control field.
+        const focusedNode=e.matches('.MuiInputBase-root.Mui-focused')&&unique(e,':scope > :is(input,textarea):not([aria-hidden="true"]).MuiInputBase-input');
         const autocompleteHover=(family==='admin'||family==='inspector'&&(loc.pathname.endsWith('/nlu/slots-filler')||loc.pathname.endsWith('/large-language-models'))&&root.id==='editSidebarWrapper'||family==='utility'&&(loc.pathname.endsWith('/settings/configuration')&&root.id==='flowSettingsTabContent'||loc.pathname.endsWith('/simulator/create')&&root.matches('[data-test="SimulationEditorHeader"]')&&unique(e,'input#selectFieldForGoal'))) &&e.matches('.MuiInputBase-root.MuiAutocomplete-inputRoot.c26-legacy-select-input-row')&&e.closest('[role="combobox"].MuiAutocomplete-root')&&unique(e,'input.MuiAutocomplete-input');
         const wizardField=family==='project-index'&&e.matches('.MuiInputBase-root')&&e.closest('[data-test="AgentCreationWizard"] form[role="form"]')&&unique(e,':scope > input#field-name,:scope > input#selectField-locale');
-        if(surface(e,'field',[...LIGHT,TRANSPARENT,'rgb(245, 245, 246)',...(wizardField||agentEditable||focusedAgent||focusedSlot||focusedHandover||focusedKnowledge||focusedScenario||autocompleteHover||goalStepField||trainerField?['rgb(236, 236, 237)']:[])])) {
+        if(surface(e,'field',[...LIGHT,TRANSPARENT,'rgb(245, 245, 246)',...(wizardField||agentEditable||focusedAgent||focusedSlot||focusedNode||focusedHandover||focusedKnowledge||focusedScenario||autocompleteHover||goalStepField||trainerField?['rgb(236, 236, 237)']:[])])) {
           if(e.matches('.MuiInputBase-root'))text(e);
           all(e,':scope > .MuiOutlinedInput-notchedOutline').forEach(outline=>slot(outline,'field-outline'));
         } else rejected.add(family);
@@ -688,6 +692,26 @@
           if(paintValue(paper,'boxShadow')==='rgba(0, 0, 0, 0.1) 0px 2px 10px 0px')slot(paper,'popover-shadow');
         }
       }
+      // Node picker popover (the + under a flow node): By Function / Extensions tabs,
+      // a search field, category tabs and a function list. Anything unexpected stays native.
+      if(enabled('global')) {
+        family='global';
+        const picker=unique(doc,'.MuiPopover-root[role="dialog"][aria-label^="Select a function or a"]');
+        const paper=picker&&unique(picker,'.MuiPopover-paper');
+        const list=paper&&unique(paper,'ul.MuiList-root[role="menu"]');
+        if(paper&&list&&paper.querySelectorAll('[role="tablist"]').length===2&&unique(paper,'input.MuiInputBase-input[type="text"]')) {
+          boundaries.push([paper,family]);plan(picker,'data-cg-owner',family);
+          if(!surface(paper,'overlay'))rejected.add(family);
+          controls(paper);
+          all(paper,'.MuiTab-wrapper, p.MuiTypography-root').forEach(e=>{
+            if(!e.childElementCount&&paintValue(e,'color')==='rgb(58, 57, 74)'&&!e.style.getPropertyPriority('color'))plan(e,'data-cg-text','secondary');
+          });
+          for(const item of all(list,'li.MuiMenuItem-root[role="menuitem"]')) {
+            if(!surface(item,paintValue(item,'backgroundColor')==='rgb(227, 233, 248)'?'menu-item workspace-selected':'menu-item',[TRANSPARENT,'rgb(227, 233, 248)']))rejected.add(family);
+            all(item,':scope > .MuiListItemIcon-root').forEach(icon=>{if(!surface(icon,'panel',[TRANSPARENT,'rgb(236, 236, 237)']))rejected.add(family);});
+          }
+        }
+      }
       // Native confirmation portal: identify its stable title/body hooks and
       // three-button structure; preserve the semantic warning badge/border.
       if(enabled('global')) {
@@ -1065,6 +1089,19 @@
           if(!surface(card,'panel',[...LIGHT,TRANSPARENT]))rejected.add(family);
           all(card,'span[id^="installedExtensionCardVersionNumberId-"],span[id^="marketPlaceExtensionCardVersionNumberId-"]').forEach(e=>{text(e);if(paintValue(e,'color')==='rgb(0, 0, 238)')plan(e,'data-cg-text','accent');});
         });
+        if(resource==='extensions') {
+          // Data-sharing notice: icon, helper paragraph and a "Show more" text button.
+          all(utilityPage,':scope > div:has(> div > svg.MuiSvgIcon-root):has(p.MuiTypography-root)').forEach(notice=>{
+            if(!surface(notice,'panel',[...LIGHT,TRANSPARENT]))rejected.add(family);
+            all(notice,'p.MuiTypography-root').forEach(e=>{
+              if(!e.closest('button')&&!e.childElementCount&&paintValue(e,'color')==='rgb(58, 57, 74)'&&!e.style.getPropertyPriority('color'))plan(e,'data-cg-text','secondary');
+            });
+          });
+          // Plain divs with their own text: the project name in the header strip and empty-section messages.
+          all(utilityPage,'[role="banner"] div,.MuiCollapse-wrapperInner div').forEach(e=>{
+            if([...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))text(e);
+          });
+        }
       }
       // The project dashboard owns its four cards, chart and period portal as
       // one atomic family. No generated class names, labels or chart values.
@@ -1450,6 +1487,10 @@
           all(summary,':scope > span,:scope > div > span').forEach(e=>{if(!e.childElementCount)text(e,'secondary');});
         });
         all(settingsForm,'.MuiListSubheader-root').forEach(e=>text(e));
+        // Plain helper paragraphs inside a section body use a neutral grey no shared list knows.
+        all(settingsForm,'.MuiAccordionDetails-root p.MuiTypography-root.MuiTypography-body1').forEach(e=>{
+          if(!e.childElementCount&&paintValue(e,'color')==='rgb(58, 57, 74)'&&!e.style.getPropertyPriority('color'))plan(e,'data-cg-text','secondary');
+        });
         // A configured speech provider adds a "Type: …" helper line whose text sits in a child span.
         all(settingsForm,'.MuiFormHelperText-root:not(.Mui-error) > span').forEach(e=>{if(!e.childElementCount)text(e);});
         all(settingsForm,'#generativeAISettingsCollapsableSection .MuiSvgIcon-colorPrimary').forEach(e=>text(e,'icon'));
@@ -1705,7 +1746,7 @@
               if(!e.closest(PROTECTED)&&neutral.includes(paintValue(e,'color'))&&!e.style.getPropertyPriority('color'))plan(e,'data-cg-text','secondary');
           }
         }
-        if(newFlowInspector||newLlmInspector||newLexiconInspector||newNluInspector||newSingleNameInspector||newHandoverInspector||newSnapshotInspector) {
+        if(flowRoute==='chart'||newFlowInspector||newLlmInspector||newLexiconInspector||newNluInspector||newSingleNameInspector||newHandoverInspector||newSnapshotInspector) {
           all(inspector,'[role="group"]:has(> button[type="submit"])').forEach(e=>{surface(e,'panel',[...LIGHT,TRANSPARENT]);all(e,'button[type="button"]').forEach(b=>{if(!b.childElementCount&&['rgb(11, 54, 148)','rgb(6, 28, 76)'].includes(paintValue(b,'color'))&&surface(b,'secondary-button',[...LIGHT,TRANSPARENT,'rgba(11, 54, 148, 0.04)']))plan(b,'data-cg-text','accent');else text(b);});});
         }
         applied++;text(inspector.querySelector('#editSidebarTitle'));
@@ -1713,6 +1754,10 @@
         // Give that observed leaf its own ink; do not infer descendant inheritance.
         all(inspector,'p#editSidebarSecondarySubtitle.MuiTypography-root > span').forEach(e=>{
           if(!e.childElementCount)text(e);
+        });
+        // Node accordions carry plain helper paragraphs in a neutral grey that no list above knows.
+        all(inspector,'.MuiAccordionDetails-root p.MuiTypography-root.c26-legacy-description-field').forEach(e=>{
+          if(!e.childElementCount&&paintValue(e,'color')==='rgb(58, 57, 74)'&&!e.style.getPropertyPriority('color'))plan(e,'data-cg-text','secondary');
         });
         // Monaco mounts a plain centred loading label even in collapsed node
         // accordions. Qualify only its observed placeholder, never editor text.
@@ -1920,12 +1965,13 @@
         const context=contextFor(e);
         if(context.island)covered=context.opaque&&!mappedInk&&!context.ink&&!mappedFill;
         if(!covered) {
+          if(!refusalSites.has(owner))refusalSites.set(owner,'text:'+e.tagName.toLowerCase()+(e.id?'#'+e.id:'')+'.'+[...e.classList].filter(c=>!/^jss/.test(c)).slice(0,3).join('.'));
           failed.add(owner);break;
         }
       }
     }
     for(const [el,attrs] of combined) for(const [name,{value,owner}] of attrs) {
-      if(name==='data-cg-slot'&&['background','background-color','background-image','box-shadow'].some(p=>el.style.getPropertyPriority(p)))failed.add(owner);
+      if(name==='data-cg-slot'&&['background','background-color','background-image','box-shadow'].some(p=>el.style.getPropertyPriority(p))){if(!refusalSites.has(owner))refusalSites.set(owner,'inline-paint:'+el.tagName.toLowerCase()+(el.id?'#'+el.id:''));failed.add(owner);}
     }
     // Read transitions before any marker/style writes to avoid layout thrashing.
     const transitions=new Map();
@@ -1936,7 +1982,7 @@
     for(const [el,attrs] of combined) for(const [name,{value,owner}] of attrs)if(!failed.has(owner)){own(el,name,value,owner,transitions.get(el));committed++;}
     if(!failed.has('admin'))for(const [portal,link] of pendingAuditTooltipLinks)auditTooltipLinks.set(portal,link);
     if(!failed.has('agents'))for(const [portal,link] of pendingAgentTooltipLinks)agentTooltipLinks.set(portal,link);
-    return {applied:committed>0,partial:partial||failed.size>0,failedFamilies:[...failed],retryFamilies:[...retryFamilies]};
+    return {applied:committed>0,partial:partial||failed.size>0,failedFamilies:[...failed],refusalSites:Object.fromEntries(refusalSites),retryFamilies:[...retryFamilies]};
   }
   globalThis.CogGraphiteAdapters=Object.freeze({qualify});
 })();

@@ -61,7 +61,7 @@ test('Original removes all paint; System and forced colours resolve correctly',a
   const h=harness({initial:'dark'});await flush();assert.equal(h.root.getAttribute('data-cg-palette'),'graphite-v3');
   h.set('native');await flush();assert.equal(h.root.attrs.size,0);assert.equal(h.paint.attrs.size,0);
   h.set('system');await flush();assert.equal(h.root.attrs.size,0);
-  const dark=h.media['(prefers-color-scheme: dark)'];dark.matches=true;dark.listener();await flush();assert.equal(h.root.attrs.size,2);
+  const dark=h.media['(prefers-color-scheme: dark)'];dark.matches=true;dark.listener();await flush();assert.equal(h.root.attrs.size,3);
   const forced=h.media['(forced-colors: active)'];forced.matches=true;forced.listener();await flush();assert.equal(h.root.attrs.size,0);
   assert.equal((await h.status()).status,'forced');
 });

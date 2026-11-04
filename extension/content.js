@@ -153,6 +153,10 @@ globalThis.CogGraphiteStart=() => {
       own(document.documentElement, 'data-cg-palette', 'graphite-v3');
       if(contrast==='more')own(document.documentElement,'data-cg-contrast','more');else disown(document.documentElement,'data-cg-contrast');
       own(document.documentElement, 'data-cg-build', build.candidateId);
+      own(document.documentElement, 'data-cg-version', build.version);
+      // Diagnostics: families kept native plus the adapters.js line that refused them, e.g. "inspector@1650".
+      const sites=result.refusalSites||{},refused=refusedFamilies.map(f=>f+'@'+(sites[f]||'?')).join(' ');
+      if(refused)own(document.documentElement,'data-cg-refused',refused);else disown(document.documentElement,'data-cg-refused');
       state = {appliedMode:'dark',status:result.partial?'partial':mode==='system'?'system-dark':'dark'};
       const insightsNav=document.querySelector?.('nav[aria-label="Insights"]');
       const insightsMain=document.querySelector?.('main#insightsMainContent');
