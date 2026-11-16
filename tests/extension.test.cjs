@@ -340,3 +340,8 @@ test('Insights history keeps qualified outgoing report until selected navigation
   h.environment.location.pathname='/insights/other/dashboard/nlu';h.nav.currententrychange();await flush();assert.equal(calls,4);
   h.environment.location.pathname='/insights/other/unsupported';h.nav.currententrychange();await flush();assert.equal(calls,5);
 });
+test('routeFamily names the new-UI project routes and still refuses unknown ones',()=>{
+  for(const slug of ['ai-agents-v2','knowledge-v2','simulator-v2','goals-v2','logs-v2','endpoints-v2','handover-providers-v2','connections-v2','functions-v2','playbooks-v2','nlu-settings','snapshot-2','copilot','ai-voice-providers','directory','contact-profiles'])
+    assert.equal(core.routeFamily('trial','/project/a/b/'+slug),slug);
+  assert.equal(core.routeFamily('trial','/project/a/b/not-a-page'),'unmapped');
+});

@@ -670,7 +670,7 @@
     if(loc.origin==='https://trial.cognigy.ai') {
       const app=unique(doc,'#app-container');
       if(!app) return {applied:false,partial:true};
-      const route=/^\/project\/[^/]+\/[^/]+(?:\/(flow\/[^/]+\/(chart|nlu|settings)(?:\/[^/]+)?|flows|ai-agents(?:\/edit\/[^/]+\/(?:jobs(?:\/[^/]+)?|persona)|\/[^/]+(?:\/[^/]+)?)?|knowledge(?:\/[^/]+(?:\/[^/]+)?)?|endpoints|endpoint\/[^/]+|snapshots|large-language-models|playbooks|settings|lexicons|goals|goal\/new|connections|nlu-connectors|functions|handover-providers|locales|tokens|members|contacts|simulator(?:\/(?:overview|scenarios|runner|create))?|logs|trainer|extensions|packaging))?\/?$/.test(loc.pathname);
+      const route=/^\/project\/[^/]+\/[^/]+(?:\/(flow\/[^/]+\/(chart|nlu|settings)(?:\/[^/]+)?|flows|ai-agents(?:\/edit\/[^/]+\/(?:jobs(?:\/[^/]+)?|persona)|\/[^/]+(?:\/[^/]+)?)?|knowledge(?:\/[^/]+(?:\/[^/]+)?)?|endpoints|endpoint\/[^/]+|snapshots|large-language-models|playbooks|settings|lexicons|goals|goal\/new|connections|nlu-connectors|functions|handover-providers|locales|tokens|members|contacts|simulator(?:\/(?:overview|scenarios|runner|create))?|logs|trainer|extensions|packaging|ai-agents-v2(?:\/new\/manual\/config)?|knowledge-v2|simulator-v2|goals-v2|logs-v2|endpoints-v2|handover-providers-v2|connections-v2|functions-v2|playbooks-v2|nlu-settings|snapshot-2|copilot|ai-voice-providers|directory|contact-profiles))?\/?$/.test(loc.pathname);
       if(!route&&!workspaceRoute) return {applied:false,partial:true};
       if(workspaceRoute)workspacePage(app);
       // Account navigation is rendered outside the workspace page. Own only
@@ -731,6 +731,101 @@
             if(paintValue(e,'color')==='rgb(6, 28, 76)')plan(e,'data-cg-text','accent');else text(e);
           });
         }
+      }
+      // Unified layout (shadcn/Radix micro-frontends). Identified by data-scope / data-slot
+      // structure only. Page content that is not listed here stays native with its own light surface.
+      {
+      const layout=unique(app,'[data-unified-layout-root="true"][data-layout="cognigy-c26"]');
+      const uFamily=indexRoute?'project-index':'shell';
+      if(layout&&(enabled(uFamily)||enabled('global'))) {
+        family=uFamily;
+        const owns=enabled(uFamily);
+        const INK=['rgb(17, 24, 39)','rgb(31, 41, 55)','rgb(55, 65, 81)','rgb(11, 35, 61)','rgb(23, 23, 23)'];
+        const SUB=['rgb(75, 85, 99)','rgb(107, 114, 128)','color(srgb 0.121569 0.160784 0.215686 / 0.8)'];
+        const HOVER=[TRANSPARENT,'rgb(236, 245, 254)','rgb(229, 242, 255)','rgb(243, 244, 246)','rgb(249, 250, 251)'];
+        const planned=new Set();
+        const paint=(el,kind,allowed=LIGHT)=>{if(surface(el,kind,allowed)){planned.add(el);return true;}return false;};
+        // Text inside an unpainted opaque native surface (badge, avatar, image mat) keeps its own ink.
+        const island=el=>{
+          for(let p=el;p&&p!==app;p=p.parentElement){
+            if(planned.has(p))return false;
+            if(getComputedStyle(p).backgroundImage!=='none'||/^rgb\(/.test(paintValue(p,'backgroundColor')))return true;
+          }
+          return false;
+        };
+        const ink=(el,role='text')=>{
+          if(island(el))return;
+          const c=paintValue(el,'color');
+          if(INK.includes(c))plan(el,'data-cg-text',role);
+          else if(SUB.includes(c))plan(el,'data-cg-text','secondary');
+          else if(c==='rgb(18, 107, 206)')plan(el,'data-cg-text','accent');
+        };
+        const walk=root=>{
+          for(const e of all(root,'*')) {
+            if(e.tagName.toLowerCase()==='svg')ink(e,'icon');
+            else if(e.closest('svg'))continue;
+            else if(e.matches('input,textarea')||Array.from(e.childNodes).some(n=>n.nodeType===3&&n.length))ink(e);
+          }
+        };
+        const sideScope=unique(layout,'[data-scope="sidebar-microfrontend"]');
+        const side=sideScope&&unique(sideScope,'[data-slot="sidebar-container"] > [data-slot="sidebar-inner"][data-sidebar="sidebar"]');
+        if(owns&&sideScope&&side&&unique(side,'[data-slot="sidebar-header"]')&&unique(side,'[data-slot="sidebar-content"]')&&unique(side,'[data-slot="sidebar-footer"]')) {
+          boundaries.push([sideScope,family]);
+          if(!paint(sideScope,'shell')||!paint(side,'shell'))rejected.add(family);
+          if(getComputedStyle(side.parentElement).borderRightColor==='rgb(229, 231, 235)')slot(side.parentElement,'rail-boundary');
+          all(side,'[data-slot="sidebar-menu-button"],[data-slot="button"]').forEach(e=>paint(e,'c26-nav',HOVER));
+          all(side,'[data-slot="sidebar-separator"]').forEach(e=>paint(e,'c26-sep',['rgb(209, 213, 219)']));
+          walk(side);
+        }
+        const toolScope=unique(layout,'[data-scope="global-toolbar-microfrontend"]');
+        const toolInner=toolScope&&unique(toolScope,':scope > div');
+        if(owns&&toolScope&&toolInner) {
+          if(!paint(toolScope,'shell')||!paint(toolInner,'shell'))rejected.add(family);
+          // The AI Assist label is native gradient ink; only the labelled icon buttons are repainted.
+          for(const b of all(toolScope,'button[aria-label][data-slot],a[aria-label][data-slot="button"]')) {
+            boundaries.push([b,family]);paint(b,'c26-nav',HOVER);walk(b);
+          }
+        }
+        const headerRoot=unique(layout,'#main-content-toolbar-root');
+        const logoScope=headerRoot&&unique(headerRoot,':scope > [data-scope]');
+        if(owns&&logoScope&&paint(logoScope,'shell')) {
+          const bar=headerRoot.parentElement?.parentElement;
+          if(bar&&getComputedStyle(bar).borderBottomColor==='rgb(229, 231, 235)')slot(bar,'c26-header-line');
+          all(logoScope,'svg[role="img"]').forEach(mono);
+        }
+        if(owns&&indexRoute) {
+          const pageScope=unique(layout,'main [data-scope="project-overview-microfrontend"]');
+          const page=pageScope&&unique(pageScope,':scope > div');
+          const content=pageScope&&unique(pageScope,'#mainContent');
+          const projects=pageScope&&unique(pageScope,'nav[aria-label="Projects"]');
+          if(pageScope&&page&&content&&projects&&unique(content,'h1')&&content.querySelector('[data-slot="card"]')) {
+            boundaries.push([pageScope,family]);
+            if(!paint(pageScope,'canvas')||!paint(page,'canvas',[...LIGHT,'rgb(249, 250, 251)'])||!paint(projects,'shell'))rejected.add(family);
+            if(getComputedStyle(projects).borderRightColor==='rgb(229, 231, 235)')slot(projects,'rail-boundary');
+            all(pageScope,'[data-slot="card"]').forEach(e=>{if(!paint(e,'panel'))rejected.add(family);});
+            all(pageScope,'[data-slot="input-group"]').forEach(e=>paint(e,'c26-field'));
+            all(pageScope,'[data-slot="button"]').forEach(e=>paint(e,'c26-nav',HOVER));
+            all(pageScope,'ul[aria-label="All projects"] > li,[data-slot="card-content"] ul > li > a').forEach(e=>paint(e,'c26-row',HOVER));
+            all(pageScope,':scope > div > a[href="#mainContent"]').forEach(e=>paint(e,'panel'));
+            walk(pageScope);
+          } else rejected.add(family);
+        }
+        // Radix popover / dropdown portals of the unified layout.
+        family='global';
+        if(enabled(family)) for(const wrap of doc.querySelectorAll('[data-radix-popper-content-wrapper]')) {
+          const pop=wrap.children.length===1?wrap.firstElementChild:null;
+          if(!pop||!pop.matches('[data-slot="popover-content"],[data-slot="dropdown-menu-content"]'))continue;
+          boundaries.push([pop,family]);plan(wrap,'data-cg-owner',family);
+          if(!paint(pop,'overlay'))rejected.add(family);
+          all(pop,'input').forEach(e=>paint(e,'c26-field'));
+          all(pop,'button,[role="menuitem"]').forEach(e=>{
+            if(paintValue(e,'backgroundColor')==='rgb(210, 231, 254)')paint(e,'c26-selected',['rgb(210, 231, 254)']);
+            else paint(e,'c26-row',HOVER);
+          });
+          all(pop,'[data-slot="separator"],[data-slot="dropdown-menu-separator"],[role="separator"],[role="none"]').forEach(e=>paint(e,'c26-sep',['rgb(229, 231, 235)','rgb(209, 213, 219)']));
+          walk(pop);
+        }
+      }
       }
       if(!workspaceRoute) {
       const nav=unique(app,'.SIDEBAR_WRAPPER nav');

@@ -22,7 +22,7 @@
     if(flow)return 'flow-'+flow[1];
     if(/^\/project\/[^/]+\/[^/]+\/goal\/new\/?$/.test(path))return 'goal';
     const area=/^\/project\/[^/]+\/[^/]+\/([^/]+)/.exec(path)?.[1];
-    return ['flows','knowledge','ai-agents','endpoints','endpoint','snapshots','large-language-models','playbooks','settings','lexicons','goals','connections','nlu-connectors','functions','handover-providers','locales','tokens','members','contacts','logs','trainer','extensions','packaging','simulator'].includes(area)?area:'unmapped';
+    return ['flows','knowledge','ai-agents','endpoints','endpoint','snapshots','large-language-models','playbooks','settings','lexicons','goals','connections','nlu-connectors','functions','handover-providers','locales','tokens','members','contacts','logs','trainer','extensions','packaging','simulator','ai-agents-v2','knowledge-v2','simulator-v2','goals-v2','logs-v2','endpoints-v2','handover-providers-v2','connections-v2','functions-v2','playbooks-v2','nlu-settings','snapshot-2','copilot','ai-voice-providers','directory','contact-profiles'].includes(area)?area:'unmapped';
   };
   const api = Object.freeze({sites,hosts,validMode,modeOf,requestedDark,contrastKey,contrastOf,routeFamily,key:site=>'cogDepth.v1.'+site});
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -154,6 +154,46 @@ document.querySelector('#run').addEventListener('click',async()=>{
     rt.mode('native');await wait();
     await reset('insights');const before=rt.qualification.length;const outside=document.createElement('div');document.body.append(outside);outside.textContent='External';await wait();check('unrelated DOM causes no qualification',rt.qualification.length===before);outside.remove();
     rt.mode('native');await wait();const idle=rt.qualification.length;document.querySelector('main').append(document.createTextNode('changed'));await wait();check('Original ignores mutation work',rt.qualification.length===idle&&!any());
+    // Unified layout (new Cognigy UI): constructed from the structure and colours observed on the live app.
+    {
+      const W='rgb(255, 255, 255)',ink='rgb(17, 24, 39)',ink2='rgb(31, 41, 55)',sub='rgb(75, 85, 99)',line='rgb(229, 231, 235)';
+      const svg=c=>'<svg aria-hidden="true" style="color:'+c+';width:16px;height:16px"></svg>';
+      const btn=(label,bg)=>'<button data-slot="button" data-variant="ghost" aria-label="'+label+'" style="color:'+ink+';background-color:'+(bg||'transparent')+'">'+svg(ink)+'</button>';
+      const unified=main=>'<div id="app-container"><div id="platform-agent-app-wrapper"><div style="background-color:'+W+'"><div data-unified-layout-root="true" data-layout="cognigy-c26">'
+        +'<div data-unified-layout-sidebar="true"><div><div data-scope="sidebar-microfrontend" style="background-color:'+W+'"><div data-slot="sidebar-wrapper"><div data-slot="sidebar" data-testid="sidebar"><div data-slot="sidebar-container" style="border-right:1px solid '+line+'"><div data-sidebar="sidebar" data-slot="sidebar-inner" style="background-color:'+W+'">'
+        +'<div data-slot="sidebar-header" data-sidebar="header"><button data-slot="popover-trigger" data-sidebar="menu-button" data-active="false" style="color:'+ink2+';background-color:transparent"><span style="color:'+ink2+'">Select project</span></button></div>'
+        +'<div data-slot="sidebar-content" data-sidebar="content"><div data-slot="collapsible"><button data-slot="sidebar-menu-button" data-sidebar="menu-button" data-active="true" style="color:rgb(11, 35, 61);background-color:transparent">'+svg('rgb(11, 35, 61)')+'<span style="color:rgb(11, 35, 61)">Design</span></button></div></div>'
+        +'<div data-slot="sidebar-footer" data-sidebar="footer"><div role="none" data-slot="sidebar-separator" style="background-color:rgb(209, 213, 219)"></div><span data-slot="avatar-fallback" style="background-color:rgb(18, 107, 206);color:'+W+'">ZR</span></div>'
+        +'</div></div></div></div></div></div></div>'
+        +'<div style="border-bottom:1px solid '+line+'"><div><div id="main-content-toolbar-root"><div data-scope="project-overview-microfrontend" style="background-color:'+W+'"><svg role="img" aria-label="Logo" style="color:'+ink+'"></svg></div></div></div>'
+        +'<div><div data-scope="global-toolbar-microfrontend" style="background-color:'+W+'"><div style="background-color:'+W+'">'+btn('Toggle search bar')+btn('Toggle user menu')+'<button style="color:rgba(0, 0, 0, 0)"><span style="background-image:linear-gradient(red, blue);color:rgba(0, 0, 0, 0)">AI Assist</span></button></div></div></div></div>'
+        +'<main>'+main+'</main></div></div></div></div>';
+      const home='<div data-scope="project-overview-microfrontend" style="background-color:'+W+'"><div style="background-color:rgb(249, 250, 251)"><a href="#mainContent" style="background-color:'+W+';color:'+ink+'">Skip</a>'
+        +'<nav aria-label="Projects" style="background-color:'+W+';border-right:1px solid '+line+'"><span style="color:'+sub+'">Projects</span>'+btn('Pin projects sidebar','rgb(229, 242, 255)')
+        +'<div data-slot="input-group" role="group" style="background-color:'+W+';border:1px solid rgb(209, 213, 219)"><input aria-label="Search" style="color:'+ink2+'"></div>'
+        +'<ul aria-label="All projects"><li><a href="#" style="color:'+ink+'"><span style="color:'+ink2+'">Alpha</span></a></li></ul></nav>'
+        +'<div id="mainContent"><h1 style="color:'+ink+'">Good morning <span style="color:'+ink+'">x</span></h1><p style="color:rgb(55, 65, 81)">Caught up</p>'
+        +'<div data-slot="card" style="background-color:'+W+';border:1px solid '+line+'"><span id="uChip" aria-hidden="true" style="background-color:rgba(18, 107, 206, 0.1);color:rgb(23, 23, 23)">'+svg('rgb(23, 23, 23)')+'</span>'
+        +'<span id="uBadge" data-slot="badge" style="background-color:rgb(238, 240, 251);color:rgb(59, 67, 159)">Recent</span><a href="#" style="color:'+ink+'"><span style="color:'+ink+'">Item</span></a><span style="color:'+sub+'">Opened</span></div></div></div></div>';
+      const mount=(main,path)=>{rt.mode('native');box.innerHTML=unified(main);rt.route(path);rt.mode('dark');};
+      const slotOf=s=>document.querySelector(s)?.getAttribute('data-cg-slot')||'';
+      mount(home,'/projects');await wait();
+      check('new Projects home paints sidebar, toolbar, cards and ink',slotOf('[data-slot="sidebar-inner"]')==='shell'&&slotOf('[data-scope="global-toolbar-microfrontend"]')==='shell'&&slotOf('[data-slot="card"]')==='panel'&&document.querySelector('#mainContent h1').getAttribute('data-cg-text')==='text'&&document.querySelector('nav[aria-label="Projects"] > span').getAttribute('data-cg-text')==='secondary');
+      check('active nav item and field use the new slots',slotOf('[data-sidebar="menu-button"][data-active="true"]')==='c26-nav'&&slotOf('[data-slot="input-group"]')==='c26-field'&&slotOf('[data-slot="sidebar-separator"]')==='c26-sep');
+      check('icon on a translucent chip is lightened but native badge keeps its own ink',document.querySelector('#uChip svg').getAttribute('data-cg-text')==='icon'&&!document.querySelector('#uBadge').hasAttribute('data-cg-text')&&!document.querySelector('#uBadge').hasAttribute('data-cg-slot'));
+      check('toolbar AI Assist label stays native gradient ink',!painted(document.querySelector('[data-scope="global-toolbar-microfrontend"] button:not([aria-label])')));
+      rt.mode('native');await wait();check('Original restores the new Projects home exactly',!any());
+      mount(home,'/projects');document.querySelector('#mainContent').insertAdjacentHTML('beforeend','<span style="color:rgb(1,2,3)">Unknown</span>');await wait();check('unknown ink keeps the new Projects home native',!any());
+      mount(home,'/projects');document.querySelector('#mainContent h1').removeAttribute('style');document.querySelector('h1').style.color='rgb(1, 2, 3)';await wait();check('unexpected heading ink refuses the new Projects home',!any());
+      mount('<div data-scope="ai-agents-v2-microfrontend" style="background-color:'+W+'"><h2 style="color:'+ink2+'">No AI Agents yet</h2></div>','/project/a/b/ai-agents-v2');await wait();
+      check('project route paints the new shell but leaves page content native',slotOf('[data-slot="sidebar-inner"]')==='shell'&&slotOf('[data-scope="global-toolbar-microfrontend"]')==='shell'&&!painted(document.querySelector('main')));
+      const popover=(extra='')=>box.insertAdjacentHTML('beforeend','<div data-radix-popper-content-wrapper=""><div data-slot="popover-content" role="dialog" style="background-color:'+W+';border:1px solid rgb(209, 213, 219)"><div style="color:rgb(107, 114, 128)">Projects</div><input aria-label="Search" style="background-color:'+W+';color:'+ink2+';border:1px solid rgb(209, 213, 219)"><button type="button" style="color:'+ink+';background-color:transparent"><span style="color:'+ink+'">All</span></button><button type="button" aria-current="true" style="background-color:rgb(210, 231, 254);color:'+ink2+'"><span style="color:'+ink2+'">Current</span></button>'+extra+'</div></div>');
+      popover();await wait();
+      check('Radix popover portal paints with owner, selected row and field',slotOf('[data-slot="popover-content"]')==='overlay'&&document.querySelector('[data-radix-popper-content-wrapper]').getAttribute('data-cg-owner')==='global'&&slotOf('[aria-current="true"]')==='c26-selected'&&slotOf('[data-slot="popover-content"] input')==='c26-field');
+      document.querySelector('[data-radix-popper-content-wrapper]').remove();popover('<span style="color:rgb(1,2,3)">Unknown</span>');await wait();
+      check('unknown popover ink refuses only the portal',!painted(document.querySelector('[data-slot="popover-content"]'))&&slotOf('[data-slot="sidebar-inner"]')==='shell');
+      rt.mode('native');await wait();check('Original restores shell and portal',!any());
+    }
   } catch(error){results.push({name:'workspace exception',pass:false,error:String(error)});}
   document.querySelector('#results').textContent=JSON.stringify({boundary:'constructed DOM; actual adapter/controller; Chrome and route doubles',passed:results.filter(x=>x.pass).length,total:results.length,results},null,2);
 });
