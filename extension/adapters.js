@@ -743,12 +743,13 @@
         const INK=['rgb(17, 24, 39)','rgb(31, 41, 55)','rgb(55, 65, 81)','rgb(11, 35, 61)','rgb(23, 23, 23)'];
         const SUB=['rgb(75, 85, 99)','rgb(107, 114, 128)','color(srgb 0.121569 0.160784 0.215686 / 0.8)'];
         const HOVER=[TRANSPARENT,'rgb(236, 245, 254)','rgb(229, 242, 255)','rgb(243, 244, 246)','rgb(249, 250, 251)'];
-        const planned=new Set();
+        const planned=new Set(),cleared=new Set();
         const paint=(el,kind,allowed=LIGHT)=>{if(surface(el,kind,allowed)){planned.add(el);return true;}return false;};
         // Text inside an unpainted opaque native surface (badge, avatar, image mat) keeps its own ink.
         const island=el=>{
           for(let p=el;p&&p!==app;p=p.parentElement){
             if(planned.has(p))return false;
+            if(cleared.has(p))continue;
             if(getComputedStyle(p).backgroundImage!=='none'||/^rgb\(/.test(paintValue(p,'backgroundColor')))return true;
           }
           return false;
@@ -791,7 +792,9 @@
         if(owns&&logoScope&&paint(logoScope,'shell')) {
           const bar=headerRoot.parentElement?.parentElement;
           if(bar&&getComputedStyle(bar).borderBottomColor==='rgb(229, 231, 235)')slot(bar,'c26-header-line');
+          all(logoScope,'div').forEach(e=>{if(LIGHT.includes(paintValue(e,'backgroundColor')))paint(e,'shell');});
           all(logoScope,'svg[role="img"]').forEach(mono);
+          boundaries.push([logoScope,family]);walk(logoScope);
         }
         if(owns&&indexRoute) {
           const pageScope=unique(layout,'main [data-scope="project-overview-microfrontend"]');
@@ -810,15 +813,40 @@
             walk(pageScope);
           } else rejected.add(family);
         }
+        // Project pages built from the shared shadcn components. Every known light surface in <main>
+        // is repainted and every text leaf must carry known ink, otherwise the page stays native.
+        family='c26-page';
+        if(enabled(family)&&/^\/project\/[^/]+\/[^/]+\/(?:ai-agents-v2(?:\/new\/manual\/config)?|flows)\/?$/.test(loc.pathname)) {
+          // Pages nest <main id="mainContent"> inside the layout's own <main>; the outer one is the root.
+          const mains=layout.querySelectorAll('main'),main=mains.length&&mains.length<=2?mains[0]:null;
+          if(main&&main.querySelector('[data-scope]')) {
+            const LINES=['rgb(229, 231, 235)','rgb(209, 213, 219)'];
+            boundaries.push([main,family]);
+            for(const e of all(main,'*')) {
+              if(e.closest('svg'))continue;
+              const bg=paintValue(e,'backgroundColor'),light=[...LIGHT,'rgb(249, 250, 251)'].includes(bg);
+              if(e.matches('[data-slot="card"]')&&light)paint(e,'panel',[...LIGHT,'rgb(249, 250, 251)']);
+              else if(e.matches('[role="banner"]')&&light)paint(e,'shell',[...LIGHT,'rgb(249, 250, 251)']);
+              else if(e.matches('[role="columnheader"]')&&bg==='rgb(243, 244, 246)')paint(e,'c26-head',['rgb(243, 244, 246)']);
+              else if(e.matches('[data-slot="input-group"],[data-slot="select-trigger"],input[data-slot="input"],textarea[data-slot="textarea"]')&&light)paint(e,'c26-field',[...LIGHT,'rgb(249, 250, 251)']);
+              else if(e.matches('button[data-slot="button"],a[role="link"],[role="row"] a')&&(light||bg===TRANSPARENT||HOVER.includes(bg)))paint(e,'c26-row',[...HOVER,...LIGHT]);
+              else if(e.matches('main,[data-scope$="-microfrontend"]')&&light)paint(e,'canvas',[...LIGHT,'rgb(249, 250, 251)']);
+              else if(light&&e.matches('div,section,header,nav,ul,li'))if(surface(e,'c26-clear',[...LIGHT,'rgb(249, 250, 251)']))cleared.add(e);
+              const st=getComputedStyle(e);
+              if(!e.matches('[data-slot="card"],[role="banner"]')&&['Top','Right','Bottom','Left'].some(side=>parseFloat(st['border'+side+'Width'])>0&&LINES.includes(paintValue(e,'border'+side+'Color'))))slot(e,'c26-line');
+            }
+            walk(main);
+          }
+        }
         // Radix popover / dropdown portals of the unified layout.
         family='global';
         if(enabled(family)) for(const wrap of doc.querySelectorAll('[data-radix-popper-content-wrapper]')) {
           const pop=wrap.children.length===1?wrap.firstElementChild:null;
-          if(!pop||!pop.matches('[data-slot="popover-content"],[data-slot="dropdown-menu-content"]'))continue;
+          if(!pop||!pop.matches('[data-slot="popover-content"],[data-slot="dropdown-menu-content"],[data-slot="select-content"]'))continue;
           boundaries.push([pop,family]);plan(wrap,'data-cg-owner',family);
           if(!paint(pop,'overlay'))rejected.add(family);
           all(pop,'input').forEach(e=>paint(e,'c26-field'));
-          all(pop,'button,[role="menuitem"]').forEach(e=>{
+          all(pop,'button,[role="menuitem"],[role="option"]').forEach(e=>{
             if(paintValue(e,'backgroundColor')==='rgb(210, 231, 254)')paint(e,'c26-selected',['rgb(210, 231, 254)']);
             else paint(e,'c26-row',HOVER);
           });
