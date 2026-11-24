@@ -676,7 +676,9 @@
       const app=unique(doc,'#app-container');
       if(!app) return {applied:false,partial:true};
       const route=/^\/project\/[^/]+\/[^/]+(?:\/(flow\/[^/]+\/(chart|nlu|settings)(?:\/[^/]+)?|flows|ai-agents(?:\/edit\/[^/]+\/(?:jobs(?:\/[^/]+)?|persona)|\/[^/]+(?:\/[^/]+)?)?|knowledge(?:\/[^/]+(?:\/[^/]+)?)?|endpoints|endpoint\/[^/]+|snapshots|large-language-models|playbooks|settings|lexicons|goals|goal\/new|connections|nlu-connectors|functions|handover-providers|locales|tokens|members|contacts|simulator(?:\/(?:overview|scenarios|runner|create))?|logs|trainer|extensions|packaging|ai-agents-v2(?:\/new\/manual\/config)?|knowledge-v2|simulator-v2|goals-v2|logs-v2|endpoints-v2|handover-providers-v2|connections-v2|functions-v2|playbooks-v2|nlu-settings|snapshot-2|copilot|ai-voice-providers|directory|contact-profiles))?\/?$/.test(loc.pathname);
-      if(!route&&!workspaceRoute) return {applied:false,partial:true};
+      // Project pages built from the shared shadcn components (see the c26-page family below).
+      const c26Page=/^\/project\/[^/]+\/[^/]+\/(?:ai-agents-v2|flows|knowledge-v2|simulator-v2|goals-v2|logs-v2|endpoints-v2|handover-providers-v2|connections-v2|functions-v2|playbooks-v2|snapshot-2|packaging|locales|tokens|members|settings|ai-voice-providers|directory|contact-profiles|nlu-connectors|lexicons|trainer|copilot|extensions)(?:\/[^/]+)*\/?$/.test(loc.pathname);
+      if(!route&&!workspaceRoute&&!c26Page) return {applied:false,partial:true};
       if(workspaceRoute)workspacePage(app);
       // Account navigation is rendered outside the workspace page. Own only
       // the exact reverse-linked global menu, on already recognized app routes.
@@ -745,8 +747,8 @@
       if(layout&&(enabled(uFamily)||enabled('global'))) {
         family=uFamily;
         const owns=enabled(uFamily);
-        const INK=['rgb(17, 24, 39)','rgb(31, 41, 55)','rgb(55, 65, 81)','rgb(11, 35, 61)','rgb(23, 23, 23)'];
-        const SUB=['rgb(75, 85, 99)','rgb(107, 114, 128)','color(srgb 0.121569 0.160784 0.215686 / 0.8)'];
+        const INK=['rgb(17, 24, 39)','rgb(31, 41, 55)','rgb(55, 65, 81)','rgb(11, 35, 61)','rgb(23, 23, 23)','rgb(0, 0, 0)'];
+        const SUB=['rgb(75, 85, 99)','rgb(107, 114, 128)','rgb(156, 163, 175)','rgba(11, 35, 61, 0.5)','color(srgb 0.121569 0.160784 0.215686 / 0.8)'];
         const HOVER=[TRANSPARENT,'rgb(236, 245, 254)','rgb(229, 242, 255)','rgb(243, 244, 246)','rgb(249, 250, 251)'];
         const planned=new Set(),cleared=new Set();
         const paint=(el,kind,allowed=LIGHT)=>{if(surface(el,kind,allowed)){planned.add(el);return true;}return false;};
@@ -821,7 +823,7 @@
         // Project pages built from the shared shadcn components. Every known light surface in <main>
         // is repainted and every text leaf must carry known ink, otherwise the page stays native.
         family='c26-page';
-        if(enabled(family)&&/^\/project\/[^/]+\/[^/]+\/(?:ai-agents-v2(?:\/new\/manual\/config)?|flows)\/?$/.test(loc.pathname)) {
+        if(enabled(family)&&c26Page) {
           // Pages nest <main id="mainContent"> inside the layout's own <main>; the outer one is the root.
           const mains=layout.querySelectorAll('main'),main=mains.length&&mains.length<=2?mains[0]:null;
           if(main&&main.querySelector('[data-scope]')) {
@@ -832,11 +834,11 @@
               const bg=paintValue(e,'backgroundColor'),light=[...LIGHT,'rgb(249, 250, 251)'].includes(bg);
               if(e.matches('[data-slot="card"]')&&light)paint(e,'panel',[...LIGHT,'rgb(249, 250, 251)']);
               else if(e.matches('[role="banner"]')&&light)paint(e,'shell',[...LIGHT,'rgb(249, 250, 251)']);
-              else if(e.matches('[role="columnheader"]')&&bg==='rgb(243, 244, 246)')paint(e,'c26-head',['rgb(243, 244, 246)']);
+              else if(e.matches('[role="columnheader"],th')&&bg==='rgb(243, 244, 246)')paint(e,'c26-head',['rgb(243, 244, 246)']);
               else if(e.matches('[data-slot="input-group"],[data-slot="select-trigger"],input[data-slot="input"],textarea[data-slot="textarea"]')&&light)paint(e,'c26-field',[...LIGHT,'rgb(249, 250, 251)']);
               else if(e.matches('button[data-slot="button"],a[role="link"],[role="row"] a')&&(light||bg===TRANSPARENT||HOVER.includes(bg)))paint(e,'c26-row',[...HOVER,...LIGHT]);
               else if(e.matches('main,[data-scope$="-microfrontend"]')&&light)paint(e,'canvas',[...LIGHT,'rgb(249, 250, 251)']);
-              else if(light&&e.matches('div,section,header,nav,ul,li'))if(surface(e,'c26-clear',[...LIGHT,'rgb(249, 250, 251)']))cleared.add(e);
+              else if(light&&e.matches('div,section,header,nav,ul,li,table,thead,tbody,tfoot,tr,td,h1,h2,h3,h4,h5,h6,form,fieldset,aside,article,footer,dl,dt,dd'))if(surface(e,'c26-clear',[...LIGHT,'rgb(249, 250, 251)']))cleared.add(e);
               const st=getComputedStyle(e);
               if(!e.matches('[data-slot="card"],[role="banner"]')&&['Top','Right','Bottom','Left'].some(side=>parseFloat(st['border'+side+'Width'])>0&&LINES.includes(paintValue(e,'border'+side+'Color'))))slot(e,'c26-line');
             }

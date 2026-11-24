@@ -184,8 +184,8 @@ document.querySelector('#run').addEventListener('click',async()=>{
       check('toolbar AI Assist label stays native gradient ink',!painted(document.querySelector('[data-scope="global-toolbar-microfrontend"] button:not([aria-label])')));
       rt.mode('native');await wait();check('Original restores the new Projects home exactly',!any());
       mount(home,'/projects');document.querySelector('#mainContent').insertAdjacentHTML('beforeend','<span style="color:rgb(1,2,3)">Unknown</span>');await wait();check('unknown ink keeps the new Projects home native',!any());
-      mount(home,'/projects');document.querySelector('#mainContent h1').removeAttribute('style');document.querySelector('h1').style.color='rgb(1, 2, 3)';await wait();check('unexpected heading ink refuses the new Projects home',!any());
-      mount('<div data-scope="ai-agents-v2-microfrontend" style="background-color:'+W+'"><h2 style="color:'+ink2+'">No AI Agents yet</h2></div>','/project/a/b/endpoints-v2');await wait();
+      mount(home,'/projects');document.querySelector('#mainContent h1').style.color='rgb(1, 2, 3)';await wait();check('unexpected heading ink refuses the new Projects home',!any());
+      mount('<div data-scope="ai-agents-v2-microfrontend" style="background-color:'+W+'"><h2 style="color:'+ink2+'">No AI Agents yet</h2></div>','/project/a/b/large-language-models');await wait();
       check('project route paints the new shell but leaves page content native',slotOf('[data-slot="sidebar-inner"]')==='shell'&&slotOf('[data-scope="global-toolbar-microfrontend"]')==='shell'&&!painted(document.querySelector('main')));
       const tr=(txt,c)=>'<span style="color:'+c+'">'+txt+'</span>';
       const cf=inner=>'<div data-scope="c26-foundation" style="background-color:'+W+'">'+inner+'</div>';
@@ -204,7 +204,7 @@ document.querySelector('#run').addEventListener('click',async()=>{
       mount('<div data-scope="ai-agents-v2-microfrontend" style="background-color:'+W+'"><div style="background-color:'+W+'"><h2 style="color:'+ink2+'">No AI Agents yet</h2><p style="color:rgb(107, 114, 128)">Create one</p><a href="#" style="background-color:rgb(18, 107, 206);color:'+W+'">Add agent</a></div></div>','/project/a/b/ai-agents-v2');await wait();
       check('AI Agents empty state paints with a native primary button',slotOf('[data-scope="ai-agents-v2-microfrontend"]')==='canvas'&&document.querySelector('h2').getAttribute('data-cg-text')==='text'&&document.querySelector('p').getAttribute('data-cg-text')==='secondary'&&!painted(document.querySelector('main a')));
       mount('<div data-scope="x-microfrontend" style="background-color:'+W+'"><p style="color:rgb(1,2,3)">Unknown</p></div>','/project/a/b/endpoints-v2');await wait();
-      check('routes without a page adapter keep their content native',!painted(document.querySelector('main'))&&slotOf('[data-slot="sidebar-inner"]')==='shell');
+      check('unknown ink on a page-adapter route keeps its content native',!painted(document.querySelector('main'))&&slotOf('[data-slot="sidebar-inner"]')==='shell');
       mount(home,'/projects');rt.mode('dark');
       // Flow editor in the unified layout: old-style hooks with new components, colours and inks.
       const muted='rgb(107, 114, 128)',borderG='rgb(156, 163, 175)';
