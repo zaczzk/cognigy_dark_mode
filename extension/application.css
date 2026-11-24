@@ -183,3 +183,5 @@
 :root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-clear"]{background-color:transparent!important}
 :root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-head"]{background-color:var(--cg-shell)!important}
 :root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-line"]{border-top-color:var(--cg-border)!important;border-right-color:var(--cg-border)!important;border-bottom-color:var(--cg-border)!important;border-left-color:var(--cg-border)!important}
+:root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-plus"]{background-color:var(--cg-node)!important;border-top-color:var(--cg-control-border)!important;border-right-color:var(--cg-control-border)!important;border-bottom-color:var(--cg-control-border)!important;border-left-color:var(--cg-control-border)!important}
+:root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-plus"]:hover{background-color:var(--cg-hover)!important}

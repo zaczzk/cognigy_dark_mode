@@ -6,8 +6,8 @@
   'use strict';
   const TRANSPARENT='rgba(0, 0, 0, 0)';
   const LIGHT=['rgb(255, 255, 255)','rgb(250, 250, 250)','rgb(249, 249, 254)','rgb(245, 246, 253)','rgb(248, 248, 248)'];
-  const TEXT=['rgb(0, 0, 0)','rgb(37, 37, 37)','rgba(0, 0, 0, 0.87)','rgba(0, 0, 0, 0.8)','rgb(31, 41, 55)'];
-  const SECONDARY=['rgb(107, 114, 128)','rgb(143, 143, 153)','rgb(166, 166, 173)','rgba(0, 0, 0, 0.54)','rgb(117, 117, 117)','rgb(102, 102, 102)'];
+  const TEXT=['rgb(0, 0, 0)','rgb(37, 37, 37)','rgba(0, 0, 0, 0.87)','rgba(0, 0, 0, 0.8)','rgb(31, 41, 55)','rgb(17, 24, 39)','rgb(55, 65, 81)','rgb(11, 35, 61)'];
+  const SECONDARY=['rgb(107, 114, 128)','rgb(143, 143, 153)','rgb(166, 166, 173)','rgba(0, 0, 0, 0.54)','rgb(117, 117, 117)','rgb(102, 102, 102)','rgb(75, 85, 99)'];
   const LINK=['rgb(11, 54, 148)','rgb(18, 107, 206)','rgb(61, 159, 255)'];
   const PROTECTED='.monaco-editor, .c26-legacy-token-chip, .MuiAvatar-root, iframe, video, canvas, [data-1password-root], [data-codex-overlay], [data-cg-native]';
   const AGENT_GRADIENT='linear-gradient(rgb(236, 245, 254) 3.67%, rgb(255, 255, 255) 42.49%)';
@@ -78,7 +78,8 @@
     // Diagnostics only: remember the adapters.js line of each family's first refusal.
     {const add=rejected.add.bind(rejected);rejected.add=f=>{if(!refusalSites.has(f))refusalSites.set(f,/:(\d+):\d+\)?$/.exec((new Error().stack||'').split('\n')[2]||'')?.[1]||'?');return add(f);};}
     const retryFamilies=new Set();
-    const plan=(el,name,value)=>plans.push([el,name,value,family]);
+    const slotted=new WeakSet(),texted=new WeakSet(),c26roots=[];
+    const plan=(el,name,value)=>{if(name==='data-cg-slot')slotted.add(el);else if(name==='data-cg-text')texted.add(el);plans.push([el,name,value,family]);};
     const slot=(el, value)=>{if(el && safe(el)) plan(el,'data-cg-slot',value);};
     const all=(root,s)=>Array.from(root.querySelectorAll(s)).filter(safe);
     const monoPaths=(svg,neutral)=>{
@@ -114,12 +115,14 @@
     function componentText(root) {
       all(root,'.MuiTypography-root, .MuiFormLabel-root, .MuiFormLabel-root > span, .MuiInputBase-input, .MuiButton-label, .MuiTab-wrapper, .MuiTableCell-root, .MuiTableSortLabel-root, .MuiFormHelperText-root, .c26-legacy-cognigy-text-editable').forEach(e=>text(e));
       all(root,'.MuiIconButton-label > .MuiSvgIcon-root, .MuiListItemIcon-root > .MuiSvgIcon-root, .MuiListItemSecondaryAction-root > .MuiSvgIcon-root, .MuiAccordionSummary-expandIcon .MuiSvgIcon-root').forEach(e=>text(e,'icon'));
+      all(root,'.MuiFormLabel-asterisk').forEach(e=>{if(paintValue(e,'color')==='rgb(227, 41, 38)')plan(e,'data-cg-text','error');});
       all(root,'.c26-legacy-cognigy-text-editable [data-slate-leaf="true"]').forEach(e=>text(e));
       all(root,'.c26-legacy-cognigy-text-editable [data-slate-leaf="true"] > [data-slate-string="true"], .MuiTab-wrapper > .MuiBadge-root > span:not(.MuiBadge-badge)').forEach(e=>text(e));
       all(root,'.c26-legacy-select-input-row > div > span').forEach(e=>text(e));
     }
     function controls(root) {
       componentText(root);
+      if(doc.querySelector('[data-unified-layout-root]'))c26roots.push([root,family]);
       // The observed yellow Deprecated badge remains a native semantic island.
       // Own its existing foreground explicitly so themed heading ink cannot leak in.
       for(const chip of all(root,'.MuiChip-root.MuiChip-sizeSmall')) {
@@ -156,6 +159,8 @@
           all(e,':scope > .MuiOutlinedInput-notchedOutline').forEach(outline=>slot(outline,'field-outline'));
         } else rejected.add(family);
       });
+      // Shared shadcn controls of the unified layout (identified by data-slot).
+      if(doc.querySelector('[data-unified-layout-root]'))all(root,'[data-slot="select-trigger"],[data-slot="input-group"],input[data-slot="input"],textarea[data-slot="textarea"]').forEach(e=>surface(e,'c26-field',[...LIGHT,'rgb(249, 250, 251)']));
       all(root,'.MuiAccordion-root').forEach(e=>{
         const lexiconGeneration=family==='inspector'&&loc.pathname.endsWith('/lexicons')&&root.id==='editSidebarWrapper'&&unique(e,'input#field-generateEntries.MuiSwitch-input[type="checkbox"]');
         if(!surface(e,'panel',[...LIGHT,...(lexiconGeneration?['rgb(250, 252, 255)']:[])]))rejected.add(family);
@@ -1735,20 +1740,22 @@
       family='chart';
       if(enabled(family)&&flowRoute==='chart'&&chart && chart.closest('#flowChartEditorTabContent')) {
         const paths=all(chart,':scope > svg > path');
-        const connectorsSafe=paths.length>0&&paths.every(e=>{const g=getComputedStyle(e);return g.fill==='none'&&g.stroke==='rgb(234, 234, 234)';});
-        if(connectorsSafe && surface(chart,'canvas',['rgb(249, 249, 254)'])) {
+        const connectorsSafe=paths.length>0&&paths.every(e=>{const g=getComputedStyle(e);return g.fill==='none'&&['rgb(234, 234, 234)','rgb(156, 163, 175)'].includes(g.stroke);});
+        if(connectorsSafe && surface(chart,'canvas',['rgb(249, 249, 254)','rgb(249, 250, 251)'])) {
           boundaries.push([chart,family]);
           applied++;
-          const page=chart.closest('.chart');if(page)surface(page,'canvas',['rgb(249, 249, 254)']);
+          const page=chart.closest('.chart');if(page)surface(page,'canvas',['rgb(249, 249, 254)','rgb(245, 249, 254)']);
           all(chart,':scope > svg > path').forEach(e=>{
             const g=getComputedStyle(e);
-            if(g.fill==='none'&&g.stroke==='rgb(234, 234, 234)')slot(e,'connector');else partial=true;
+            if(g.fill==='none'&&['rgb(234, 234, 234)','rgb(156, 163, 175)'].includes(g.stroke))slot(e,'connector');else partial=true;
           });
           all(chart,'.chartNode-normal').forEach(face=>{
             const wrapper=face.closest('.chartNode[role="button"]');
             if(!wrapper||!face.querySelector('[id^="nodeLabelFor-"]')) {partial=true;return;}
             if(surface(face,'node',['rgb(255, 255, 255)'])) {
               componentText(face);slot(wrapper,'node-owner');
+              // The unified layout paints plain wrappers inside nodes white; let the node surface show through.
+              all(face,'div').forEach(d=>{if(!d.matches('[class*="MuiInputBase"]'))surface(d,'c26-clear',['rgb(255, 255, 255)']);});
               // Native preview text has .55 opacity. White composites to 5.08:1.
               all(face,'div:has(> [id^="nodeLabelFor-"]) + div > div > div').forEach(e=>text(e,'on-button'));
               all(face,':scope > div:first-child > div').forEach(e=>{
@@ -1767,6 +1774,11 @@
             const img=face.querySelector(':scope > img[alt="AI Agent Avatar"]');
             const wrapper=face.closest('.chartNode[role="button"]');
             const g=getComputedStyle(face);
+            if(face.matches('.ai-agent-node-c26')&&wrapper&&g.backgroundImage==='none'&&surface(face,'node',['rgb(255, 255, 255)'])) {
+              slot(wrapper,'node-owner');
+              all(face,'div').forEach(d=>surface(d,'c26-clear',['rgb(255, 255, 255)']));
+              return;
+            }
             if(!img||!wrapper||g.backgroundImage!==AGENT_GRADIENT||g.boxShadow!==AGENT_SHADOW||
                 !['rgb(229, 242, 255)','rgb(61, 159, 255)'].includes(g.borderTopColor)) {partial=true;return;}
             slot(face,'agent');slot(wrapper,'agent-owner');componentText(face);
@@ -1779,6 +1791,18 @@
               all(toolbar,':scope > button, :scope > p, button > .MuiSvgIcon-root').forEach(e=>text(e,'icon'));
             }
           });
+          if(doc.querySelector('[data-unified-layout-root]')) {
+            all(chart,'button[aria-label^="Add "]').forEach(e=>{if(surface(e,'c26-plus',['rgb(255, 255, 255)']))text(e,'icon');});
+            for(const e of all(chartPanel,'div,button')) {
+              if(chart.contains(e)||e.closest('.chartNode'))continue;
+              const bg=paintValue(e,'backgroundColor'),st=getComputedStyle(e);
+              if(bg==='rgb(229, 231, 235)'&&e.tagName==='DIV')surface(e,'c26-sep',['rgb(229, 231, 235)']);
+              else if(bg==='rgb(255, 255, 255)'&&e.tagName==='DIV'&&parseFloat(st.borderTopWidth)>0){if(surface(e,'toolbar',['rgb(255, 255, 255)']))slot(e,'c26-line');}
+              else if(bg==='rgb(255, 255, 255)'&&e.tagName==='BUTTON'){if(surface(e,'c26-row',['rgb(255, 255, 255)']))slot(e,'c26-line');}
+              else if(bg==='rgb(255, 255, 255)'&&e.tagName==='DIV')surface(e,'c26-clear',['rgb(255, 255, 255)']);
+            }
+            c26roots.push([chartPanel,family]);
+          }
           // The native history group wraps each icon button in a tooltip span.
           for(const toolbar of all(chartPanel,':scope > div:has(> span > button[aria-label="Undo"])')) {
             const buttons=Array.from(toolbar.querySelectorAll(':scope > span > button.MuiIconButton-root'));
@@ -2038,6 +2062,25 @@
       // and live execution/error combinations are accepted on the installed build.
       partial=true;
       }
+    }
+    // Unified-layout components inside old-style families carry no Mui classes. Map their text leaves and
+    // icons, but only where the nearest opaque surface is one of ours; native opaque chips keep their ink.
+    for(const [root,owner] of c26roots) {
+      const prev=family;family=owner;
+      const onDark=el=>{
+        for(let p=el;p;p=p.parentElement) {
+          if(slotted.has(p))return true;
+          if(/^rgb\(/.test(paintValue(p,'backgroundColor'))||getComputedStyle(p).backgroundImage!=='none')return false;
+        }
+        return false;
+      };
+      for(const e of all(root,'*')) {
+        if(texted.has(e))continue;
+        if(e.tagName.toLowerCase()==='svg'){if(onDark(e))text(e,'icon');}
+        else if(e.closest('svg'))continue;
+        else if((e.matches('input,textarea')||Array.from(e.childNodes).some(n=>n.nodeType===3&&n.length))&&onDark(e))text(e);
+      }
+      family=prev;
     }
     // Each element can have several paint slots; keep token ownership explicit.
     const combined=new Map();
