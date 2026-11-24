@@ -742,22 +742,39 @@
       // Unified layout (shadcn/Radix micro-frontends). Identified by data-scope / data-slot
       // structure only. Page content that is not listed here stays native with its own light surface.
       {
-      const layout=unique(app,'[data-unified-layout-root="true"][data-layout="cognigy-c26"]');
+      const layout=unique(app,'[data-unified-layout-root="true"]');
       const uFamily=indexRoute?'project-index':'shell';
-      if(layout&&(enabled(uFamily)||enabled('global'))) {
+      if(layout&&(enabled(uFamily)||enabled('global')||enabled('c26-page'))) {
         family=uFamily;
         const owns=enabled(uFamily);
-        const INK=['rgb(17, 24, 39)','rgb(31, 41, 55)','rgb(55, 65, 81)','rgb(11, 35, 61)','rgb(23, 23, 23)','rgb(0, 0, 0)'];
-        const SUB=['rgb(75, 85, 99)','rgb(107, 114, 128)','rgb(156, 163, 175)','rgba(11, 35, 61, 0.5)','color(srgb 0.121569 0.160784 0.215686 / 0.8)'];
-        const HOVER=[TRANSPARENT,'rgb(236, 245, 254)','rgb(229, 242, 255)','rgb(243, 244, 246)','rgb(249, 250, 251)'];
+        const INK=['rgb(17, 24, 39)','rgb(31, 41, 55)','rgb(55, 65, 81)','rgb(11, 35, 61)','rgb(23, 23, 23)','rgb(0, 0, 0)','rgba(0, 0, 0, 0.87)'];
+        const SUB=['rgba(0, 0, 0, 0.54)','rgb(75, 85, 99)','rgb(107, 114, 128)','rgb(156, 163, 175)','rgba(11, 35, 61, 0.5)','color(srgb 0.121569 0.160784 0.215686 / 0.8)'];
+        const HOVER=[TRANSPARENT,'rgb(236, 245, 254)','rgb(229, 242, 255)','rgb(210, 231, 254)','rgb(243, 244, 246)','rgb(249, 250, 251)'];
         const planned=new Set(),cleared=new Set();
         const paint=(el,kind,allowed=LIGHT)=>{if(surface(el,kind,allowed)){planned.add(el);return true;}return false;};
+        // Native tinted pills and badges are repainted with dark tints so their ink never sits on a light chip.
+        const BADGES={'rgb(229, 242, 255)':['c26-badge','text'],'rgb(236, 245, 254)':['c26-badge','text'],'rgb(238, 240, 251)':['c26-badge','text'],'rgb(243, 244, 246)':['c26-badge','text'],'rgb(229, 231, 235)':['c26-badge','text'],'rgb(239, 251, 241)':['c26-badge-ok','success'],'rgb(18, 107, 206)':['primary','on-button']};
+        const ownText=e=>Array.from(e.childNodes).some(n=>n.nodeType===3&&n.length);
+        // Semi-transparent light fills (muted panels) still read as a light surface under dark ink.
+        const lightTint=bg=>{
+          let m=/^oklab\(([\d.]+) [-\d.e]+ [-\d.e]+(?: \/ ([\d.]+))?\)$/.exec(bg);
+          if(m)return +m[1]>=0.9&&+(m[2]??1)<1&&+(m[2]??1)>0;
+          m=/^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(bg);
+          return !!m&&+m[1]>=200&&+m[2]>=200&&+m[3]>=200&&+m[4]<1&&+m[4]>0;
+        };
+        const badge=e=>{
+          const pill=e.matches('[data-slot$="badge"]')||e.tagName==='SPAN'&&parseFloat(getComputedStyle(e).borderTopLeftRadius)>=999&&ownText(e);
+          const bg=paintValue(e,'backgroundColor'),kind=pill&&BADGES[bg];
+          if(!kind||!paint(e,kind[0],[bg]))return false;
+          if(ownText(e))plan(e,'data-cg-text',kind[1]);
+          return true;
+        };
         // Text inside an unpainted opaque native surface (badge, avatar, image mat) keeps its own ink.
         const island=el=>{
           for(let p=el;p&&p!==app;p=p.parentElement){
             if(planned.has(p))return false;
             if(cleared.has(p))continue;
-            if(getComputedStyle(p).backgroundImage!=='none'||/^rgb\(/.test(paintValue(p,'backgroundColor')))return true;
+            if(getComputedStyle(p).backgroundImage!=='none'||/^rgb\(/.test(paintValue(p,'backgroundColor'))||lightTint(paintValue(p,'backgroundColor')))return true;
           }
           return false;
         };
@@ -767,6 +784,8 @@
           if(INK.includes(c))plan(el,'data-cg-text',role);
           else if(SUB.includes(c))plan(el,'data-cg-text','secondary');
           else if(c==='rgb(18, 107, 206)')plan(el,'data-cg-text','accent');
+          else if(c==='rgb(227, 41, 38)')plan(el,'data-cg-text','error');
+          else if(c==='rgb(24, 99, 41)')plan(el,'data-cg-text','success');
         };
         const walk=root=>{
           for(const e of all(root,'*')) {
@@ -781,7 +800,8 @@
           boundaries.push([sideScope,family]);
           if(!paint(sideScope,'shell')||!paint(side,'shell'))rejected.add(family);
           if(getComputedStyle(side.parentElement).borderRightColor==='rgb(229, 231, 235)')slot(side.parentElement,'rail-boundary');
-          all(side,'[data-slot="sidebar-menu-button"],[data-slot="button"]').forEach(e=>paint(e,'c26-nav',HOVER));
+          all(side,'[data-slot="sidebar-menu-button"],[data-slot="sidebar-menu-sub-button"],[data-slot="button"]').forEach(e=>paint(e,'c26-nav',HOVER));
+          all(side,'[data-slot$="badge"]').forEach(badge);
           all(side,'[data-slot="sidebar-separator"]').forEach(e=>paint(e,'c26-sep',['rgb(209, 213, 219)']));
           walk(side);
         }
@@ -801,6 +821,7 @@
           if(bar&&getComputedStyle(bar).borderBottomColor==='rgb(229, 231, 235)')slot(bar,'c26-header-line');
           all(logoScope,'div').forEach(e=>{if(LIGHT.includes(paintValue(e,'backgroundColor')))paint(e,'shell');});
           all(logoScope,'svg[role="img"]').forEach(mono);
+          all(logoScope,'[data-slot$="badge"]').forEach(badge);
           boundaries.push([logoScope,family]);walk(logoScope);
         }
         if(owns&&indexRoute) {
@@ -826,23 +847,40 @@
         if(enabled(family)&&c26Page) {
           // Pages nest <main id="mainContent"> inside the layout's own <main>; the outer one is the root.
           const mains=layout.querySelectorAll('main'),main=mains.length&&mains.length<=2?mains[0]:null;
-          if(main&&main.querySelector('[data-scope]')) {
-            const LINES=['rgb(229, 231, 235)','rgb(209, 213, 219)'];
-            boundaries.push([main,family]);
-            for(const e of all(main,'*')) {
+          const LINES=['rgb(229, 231, 235)','rgb(209, 213, 219)'];
+          const c26Surfaces=region=>{
+            for(const e of all(region,'*')) {
               if(e.closest('svg'))continue;
               const bg=paintValue(e,'backgroundColor'),light=[...LIGHT,'rgb(249, 250, 251)'].includes(bg);
-              if(e.matches('[data-slot="card"]')&&light)paint(e,'panel',[...LIGHT,'rgb(249, 250, 251)']);
+              if(badge(e)){}
+              else if(e.matches('[data-slot="card"]')&&light)paint(e,'panel',[...LIGHT,'rgb(249, 250, 251)']);
               else if(e.matches('[role="banner"]')&&light)paint(e,'shell',[...LIGHT,'rgb(249, 250, 251)']);
-              else if(e.matches('[role="columnheader"],th')&&bg==='rgb(243, 244, 246)')paint(e,'c26-head',['rgb(243, 244, 246)']);
-              else if(e.matches('[data-slot="input-group"],[data-slot="select-trigger"],input[data-slot="input"],textarea[data-slot="textarea"]')&&light)paint(e,'c26-field',[...LIGHT,'rgb(249, 250, 251)']);
-              else if(e.matches('button[data-slot="button"],a[role="link"],[role="row"] a')&&(light||bg===TRANSPARENT||HOVER.includes(bg)))paint(e,'c26-row',[...HOVER,...LIGHT]);
+              else if(e.matches('[role="columnheader"],th')&&['rgb(243, 244, 246)','rgb(229, 231, 235)'].includes(bg))paint(e,'c26-head',[bg]);
+              else if(e.matches('[role="tablist"]')&&bg!==TRANSPARENT&&(light||HOVER.includes(bg)))paint(e,'c26-head',[bg]);
+              else if(e.matches('[data-slot="input-group"],[data-slot="select-trigger"],[data-slot="popover-trigger"],textarea,select,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([data-slot="input-group-control"])')&&light)paint(e,'c26-field',[...LIGHT,'rgb(249, 250, 251)']);
+              else if(e.matches('button,[role="tab"],[role="radio"],a[role="link"],[role="row"] a,tr,[role="row"]')&&(light||HOVER.includes(bg))) {
+                const chosen=bg!==TRANSPARENT&&(!light&&e.matches('[role="tab"],[role="radio"],button[data-state="on"],button[data-active="true"],[aria-selected="true"]')||e.matches('[role="tab"][data-state="active"]')&&!!e.parentElement?.matches('[role="tablist"][data-variant="contained"]'));
+                paint(e,chosen?'c26-selected':'c26-row',[...HOVER,...LIGHT]);
+              }
               else if(e.matches('main,[data-scope$="-microfrontend"]')&&light)paint(e,'canvas',[...LIGHT,'rgb(249, 250, 251)']);
+              else if(lightTint(bg)&&e.matches('div,section,aside,header,li,ul'))paint(e,'c26-head',[bg]);
               else if(light&&e.matches('div,section,header,nav,ul,li,table,thead,tbody,tfoot,tr,td,h1,h2,h3,h4,h5,h6,form,fieldset,aside,article,footer,dl,dt,dd'))if(surface(e,'c26-clear',[...LIGHT,'rgb(249, 250, 251)']))cleared.add(e);
               const st=getComputedStyle(e);
               if(!e.matches('[data-slot="card"],[role="banner"]')&&['Top','Right','Bottom','Left'].some(side=>parseFloat(st['border'+side+'Width'])>0&&LINES.includes(paintValue(e,'border'+side+'Color'))))slot(e,'c26-line');
             }
+          };
+          if(main&&main.querySelector('[data-scope]')) {
+            boundaries.push([main,family]);
+            c26Surfaces(main);
             walk(main);
+          }
+          // Create / edit side panel of the module pages (a Paper outside <main>).
+          const sidePanel=unique(app,'#editSidebarWrapper[data-test="EditSidebar"][role="region"][aria-labelledby="editSidebarTitle"]');
+          if(sidePanel&&unique(sidePanel,'#editSidebarTitle')) {
+            boundaries.push([sidePanel,family]);
+            if(paint(sidePanel,'panel'))slot(sidePanel,'c26-line');else rejected.add(family);
+            c26Surfaces(sidePanel);
+            walk(sidePanel);
           }
         }
         // Radix popover / dropdown portals of the unified layout.
@@ -2080,7 +2118,9 @@
         if(texted.has(e))continue;
         if(e.tagName.toLowerCase()==='svg'){if(onDark(e))text(e,'icon');}
         else if(e.closest('svg'))continue;
-        else if((e.matches('input,textarea')||Array.from(e.childNodes).some(n=>n.nodeType===3&&n.length))&&onDark(e))text(e);
+        else if((e.matches('input,textarea')||Array.from(e.childNodes).some(n=>n.nodeType===3&&n.length))&&onDark(e)) {
+          if(paintValue(e,'color')==='rgb(227, 41, 38)')plan(e,'data-cg-text','error');else text(e);
+        }
       }
       family=prev;
     }
@@ -2133,7 +2173,7 @@
         const context=contextFor(e);
         if(context.island)covered=context.opaque&&!mappedInk&&!context.ink&&!mappedFill;
         if(!covered) {
-          if(!refusalSites.has(owner))refusalSites.set(owner,'text:'+e.tagName.toLowerCase()+(e.id?'#'+e.id:'')+'.'+[...e.classList].filter(c=>!/^jss/.test(c)).slice(0,3).join('.'));
+          if(!refusalSites.has(owner))refusalSites.set(owner,'text:'+e.tagName.toLowerCase()+(e.id?'#'+e.id:'')+'.'+[...e.classList].filter(c=>!/^jss/.test(c)).slice(0,3).join('.')+' c='+paintValue(e,'color')+' in='+(e.closest('[data-slot]')?.getAttribute('data-slot')||e.parentElement?.tagName.toLowerCase()||''));
           failed.add(owner);break;
         }
       }
