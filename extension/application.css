@@ -188,3 +188,5 @@
 :root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-badge"]{background-color:var(--cg-selected)!important}
 :root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-badge-ok"]{background-color:rgb(26 56 42)!important}
 :root[data-cg-palette="graphite-v3"] [data-cg-text="success"]{color:var(--cg-success)!important}
+:root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-badge-err"]{background-color:rgb(158 40 52)!important}
+:root[data-cg-palette="graphite-v3"] [data-cg-slot~="c26-nogradient"]{background-image:none!important;background-color:var(--cg-panel)!important}
