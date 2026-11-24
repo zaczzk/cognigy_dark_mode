@@ -813,6 +813,9 @@
             else if(e.matches('button,a')&&bg==='rgb(18, 107, 206)'&&paint(e,'primary',[bg])) {
               if(ownText(e))plan(e,'data-cg-text','on-button');
             }
+            else if(e.matches('button,a')&&bg==='rgb(227, 41, 38)'&&paint(e,'c26-badge-err',[bg])) {
+              if(ownText(e))plan(e,'data-cg-text','on-button');
+            }
             else if(e.matches('[data-slot="panel-root"]')&&getComputedStyle(e).backgroundImage.startsWith('radial-gradient')) {
               slot(e,'c26-nogradient');planned.add(e);
             }
@@ -923,6 +926,15 @@
           });
           all(pop,'[data-slot="separator"],[data-slot="dropdown-menu-separator"],[role="separator"],[role="none"]').forEach(e=>paint(e,'c26-sep',['rgb(229, 231, 235)','rgb(209, 213, 219)']));
           walk(pop);
+        }
+        // Radix dialogs (confirmations, wizards). The overlay stays native; only the dialog surface is repainted.
+        if(enabled(family)) for(const dlg of all(doc,'[role="dialog"][data-slot$="dialog-content"],[role="alertdialog"][data-slot$="dialog-content"]')) {
+          const host=dlg.closest('[data-scope]');
+          boundaries.push([dlg,family]);if(host)plan(host,'data-cg-owner',family);
+          if(!paint(dlg,'overlay'))rejected.add(family);
+          slot(dlg,'c26-line');
+          c26Surfaces(dlg);
+          walk(dlg);
         }
       }
       }
