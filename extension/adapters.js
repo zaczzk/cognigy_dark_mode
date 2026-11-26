@@ -6,8 +6,8 @@
   'use strict';
   const TRANSPARENT='rgba(0, 0, 0, 0)';
   const LIGHT=['rgb(255, 255, 255)','rgb(250, 250, 250)','rgb(249, 249, 254)','rgb(245, 246, 253)','rgb(248, 248, 248)'];
-  const TEXT=['rgb(0, 0, 0)','rgb(37, 37, 37)','rgba(0, 0, 0, 0.87)','rgba(0, 0, 0, 0.8)','rgb(31, 41, 55)'];
-  const SECONDARY=['rgb(107, 114, 128)','rgb(143, 143, 153)','rgb(166, 166, 173)','rgba(0, 0, 0, 0.54)','rgb(117, 117, 117)','rgb(102, 102, 102)'];
+  const TEXT=['rgb(0, 0, 0)','rgb(37, 37, 37)','rgba(0, 0, 0, 0.87)','rgba(0, 0, 0, 0.8)','rgb(31, 41, 55)','rgb(17, 24, 39)','rgb(55, 65, 81)','rgb(11, 35, 61)'];
+  const SECONDARY=['rgb(107, 114, 128)','rgb(143, 143, 153)','rgb(166, 166, 173)','rgba(0, 0, 0, 0.54)','rgb(117, 117, 117)','rgb(102, 102, 102)','rgb(75, 85, 99)'];
   const LINK=['rgb(11, 54, 148)','rgb(18, 107, 206)','rgb(61, 159, 255)'];
   const PROTECTED='.monaco-editor, .c26-legacy-token-chip, .MuiAvatar-root, iframe, video, canvas, [data-1password-root], [data-codex-overlay], [data-cg-native]';
   const AGENT_GRADIENT='linear-gradient(rgb(236, 245, 254) 3.67%, rgb(255, 255, 255) 42.49%)';
@@ -78,7 +78,9 @@
     // Diagnostics only: remember the adapters.js line of each family's first refusal.
     {const add=rejected.add.bind(rejected);rejected.add=f=>{if(!refusalSites.has(f))refusalSites.set(f,/:(\d+):\d+\)?$/.exec((new Error().stack||'').split('\n')[2]||'')?.[1]||'?');return add(f);};}
     const retryFamilies=new Set();
-    const plan=(el,name,value)=>plans.push([el,name,value,family]);
+    const slotted=new WeakSet(),texted=new WeakSet(),c26roots=[];
+    let c26Run=null;
+    const plan=(el,name,value)=>{if(name==='data-cg-slot')slotted.add(el);else if(name==='data-cg-text')texted.add(el);plans.push([el,name,value,family]);};
     const slot=(el, value)=>{if(el && safe(el)) plan(el,'data-cg-slot',value);};
     const all=(root,s)=>Array.from(root.querySelectorAll(s)).filter(safe);
     const monoPaths=(svg,neutral)=>{
@@ -114,12 +116,14 @@
     function componentText(root) {
       all(root,'.MuiTypography-root, .MuiFormLabel-root, .MuiFormLabel-root > span, .MuiInputBase-input, .MuiButton-label, .MuiTab-wrapper, .MuiTableCell-root, .MuiTableSortLabel-root, .MuiFormHelperText-root, .c26-legacy-cognigy-text-editable').forEach(e=>text(e));
       all(root,'.MuiIconButton-label > .MuiSvgIcon-root, .MuiListItemIcon-root > .MuiSvgIcon-root, .MuiListItemSecondaryAction-root > .MuiSvgIcon-root, .MuiAccordionSummary-expandIcon .MuiSvgIcon-root').forEach(e=>text(e,'icon'));
+      all(root,'.MuiFormLabel-asterisk').forEach(e=>{if(paintValue(e,'color')==='rgb(227, 41, 38)')plan(e,'data-cg-text','error');});
       all(root,'.c26-legacy-cognigy-text-editable [data-slate-leaf="true"]').forEach(e=>text(e));
       all(root,'.c26-legacy-cognigy-text-editable [data-slate-leaf="true"] > [data-slate-string="true"], .MuiTab-wrapper > .MuiBadge-root > span:not(.MuiBadge-badge)').forEach(e=>text(e));
       all(root,'.c26-legacy-select-input-row > div > span').forEach(e=>text(e));
     }
     function controls(root) {
       componentText(root);
+      if(doc.querySelector('[data-unified-layout-root]'))c26roots.push([root,family]);
       // The observed yellow Deprecated badge remains a native semantic island.
       // Own its existing foreground explicitly so themed heading ink cannot leak in.
       for(const chip of all(root,'.MuiChip-root.MuiChip-sizeSmall')) {
@@ -156,6 +160,8 @@
           all(e,':scope > .MuiOutlinedInput-notchedOutline').forEach(outline=>slot(outline,'field-outline'));
         } else rejected.add(family);
       });
+      // Shared shadcn controls of the unified layout (identified by data-slot).
+      if(doc.querySelector('[data-unified-layout-root]'))all(root,'[data-slot="select-trigger"],[data-slot="input-group"],input[data-slot="input"],textarea[data-slot="textarea"]').forEach(e=>surface(e,'c26-field',[...LIGHT,'rgb(249, 250, 251)']));
       all(root,'.MuiAccordion-root').forEach(e=>{
         const lexiconGeneration=family==='inspector'&&loc.pathname.endsWith('/lexicons')&&root.id==='editSidebarWrapper'&&unique(e,'input#field-generateEntries.MuiSwitch-input[type="checkbox"]');
         if(!surface(e,'panel',[...LIGHT,...(lexiconGeneration?['rgb(250, 252, 255)']:[])]))rejected.add(family);
@@ -670,8 +676,10 @@
     if(loc.origin==='https://trial.cognigy.ai') {
       const app=unique(doc,'#app-container');
       if(!app) return {applied:false,partial:true};
-      const route=/^\/project\/[^/]+\/[^/]+(?:\/(flow\/[^/]+\/(chart|nlu|settings)(?:\/[^/]+)?|flows|ai-agents(?:\/edit\/[^/]+\/(?:jobs(?:\/[^/]+)?|persona)|\/[^/]+(?:\/[^/]+)?)?|knowledge(?:\/[^/]+(?:\/[^/]+)?)?|endpoints|endpoint\/[^/]+|snapshots|large-language-models|playbooks|settings|lexicons|goals|goal\/new|connections|nlu-connectors|functions|handover-providers|locales|tokens|members|contacts|simulator(?:\/(?:overview|scenarios|runner|create))?|logs|trainer|extensions|packaging))?\/?$/.test(loc.pathname);
-      if(!route&&!workspaceRoute) return {applied:false,partial:true};
+      const route=/^\/project\/[^/]+\/[^/]+(?:\/(flow\/[^/]+\/(chart|nlu|settings)(?:\/[^/]+)?|flows|ai-agents(?:\/edit\/[^/]+\/(?:jobs(?:\/[^/]+)?|persona)|\/[^/]+(?:\/[^/]+)?)?|knowledge(?:\/[^/]+(?:\/[^/]+)?)?|endpoints|endpoint\/[^/]+|snapshots|large-language-models|playbooks|settings|lexicons|goals|goal\/new|connections|nlu-connectors|functions|handover-providers|locales|tokens|members|contacts|simulator(?:\/(?:overview|scenarios|runner|create))?|logs|trainer|extensions|packaging|ai-agents-v2(?:\/new\/manual\/config)?|knowledge-v2|simulator-v2|goals-v2|logs-v2|endpoints-v2|handover-providers-v2|connections-v2|functions-v2|playbooks-v2|nlu-settings|snapshot-2|copilot|ai-voice-providers|directory|contact-profiles))?\/?$/.test(loc.pathname);
+      // Project pages built from the shared shadcn components (see the c26-page family below).
+      const c26Page=/^\/project\/[^/]+\/[^/]+\/(?:ai-agents-v2|flows|knowledge-v2|simulator-v2|goals-v2|logs-v2|endpoints-v2|handover-providers-v2|connections-v2|functions-v2|playbooks-v2|snapshot-2|packaging|locales|tokens|members|settings|ai-voice-providers|directory|contact-profiles|nlu-connectors|lexicons|trainer|copilot|extensions)(?:\/[^/]+)*\/?$/.test(loc.pathname);
+      if(!route&&!workspaceRoute&&!c26Page) return {applied:false,partial:true};
       if(workspaceRoute)workspacePage(app);
       // Account navigation is rendered outside the workspace page. Own only
       // the exact reverse-linked global menu, on already recognized app routes.
@@ -731,6 +739,204 @@
             if(paintValue(e,'color')==='rgb(6, 28, 76)')plan(e,'data-cg-text','accent');else text(e);
           });
         }
+      }
+      // Unified layout (shadcn/Radix micro-frontends). Identified by data-scope / data-slot
+      // structure only. Page content that is not listed here stays native with its own light surface.
+      {
+      const layout=unique(app,'[data-unified-layout-root="true"]');
+      const uFamily=indexRoute?'project-index':'shell';
+      if(layout&&(enabled(uFamily)||enabled('global')||enabled('c26-page')||enabled('chat'))) {
+        family=uFamily;
+        const owns=enabled(uFamily);
+        const INK=['rgb(17, 24, 39)','rgb(31, 41, 55)','rgb(55, 65, 81)','rgb(11, 35, 61)','rgb(23, 23, 23)','rgb(0, 0, 0)','rgba(0, 0, 0, 0.87)'];
+        const SUB=['rgba(0, 0, 0, 0.54)','rgb(75, 85, 99)','rgb(107, 114, 128)','rgb(156, 163, 175)','rgba(11, 35, 61, 0.5)','color(srgb 0.121569 0.160784 0.215686 / 0.8)'];
+        const HOVER=[TRANSPARENT,'rgb(236, 245, 254)','rgb(229, 242, 255)','rgb(210, 231, 254)','rgb(243, 244, 246)','rgb(249, 250, 251)'];
+        const planned=new Set(),cleared=new Set();
+        const paint=(el,kind,allowed=LIGHT)=>{if(surface(el,kind,allowed)){planned.add(el);return true;}return false;};
+        // Native tinted pills and badges are repainted with dark tints so their ink never sits on a light chip.
+        const BADGES={'rgb(229, 242, 255)':['c26-badge','text'],'rgb(236, 245, 254)':['c26-badge','text'],'rgb(238, 240, 251)':['c26-badge','text'],'rgb(243, 244, 246)':['c26-badge','text'],'rgb(229, 231, 235)':['c26-badge','text'],'rgb(239, 251, 241)':['c26-badge-ok','success'],'rgb(227, 41, 38)':['c26-badge-err','on-button'],'rgb(18, 107, 206)':['primary','on-button']};
+        const ownText=e=>Array.from(e.childNodes).some(n=>n.nodeType===3&&n.length);
+        // Semi-transparent light fills (muted panels) still read as a light surface under dark ink.
+        const lightTint=bg=>{
+          let m=/^oklab\(([\d.]+) [-\d.e]+ [-\d.e]+(?: \/ ([\d.]+))?\)$/.exec(bg);
+          if(m)return +m[1]>=0.9&&+(m[2]??1)<1&&+(m[2]??1)>0;
+          m=/^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(bg);
+          return !!m&&+m[1]>=200&&+m[2]>=200&&+m[3]>=200&&+m[4]<1&&+m[4]>0;
+        };
+        const badge=e=>{
+          const pill=e.matches('[data-slot$="badge"]')||e.tagName==='SPAN'&&parseFloat(getComputedStyle(e).borderTopLeftRadius)>=999&&ownText(e);
+          const bg=paintValue(e,'backgroundColor'),kind=pill&&BADGES[bg];
+          if(!kind||!paint(e,kind[0],[bg]))return false;
+          if(ownText(e))plan(e,'data-cg-text',kind[1]);
+          return true;
+        };
+        // Text inside an unpainted opaque native surface (badge, avatar, image mat) keeps its own ink.
+        const island=el=>{
+          for(let p=el;p&&p!==app;p=p.parentElement){
+            if(planned.has(p))return false;
+            if(cleared.has(p))continue;
+            if(getComputedStyle(p).backgroundImage!=='none'||/^rgb\(/.test(paintValue(p,'backgroundColor'))||lightTint(paintValue(p,'backgroundColor')))return true;
+          }
+          return false;
+        };
+        const ink=(el,role='text')=>{
+          if(paintValue(el,'color')===TRANSPARENT&&getComputedStyle(el).backgroundImage!=='none'&&ownText(el)){slot(el,'c26-nogradient');planned.add(el);plan(el,'data-cg-text','accent');return;}
+          if(island(el))return;
+          const c=paintValue(el,'color');
+          if(INK.includes(c))plan(el,'data-cg-text',role);
+          else if(SUB.includes(c))plan(el,'data-cg-text','secondary');
+          else if(c==='rgb(18, 107, 206)'||c==='rgb(23, 86, 155)')plan(el,'data-cg-text','accent');
+          else if(c==='rgb(227, 41, 38)')plan(el,'data-cg-text','error');
+          else if(c==='rgb(24, 99, 41)')plan(el,'data-cg-text','success');
+        };
+        const walk=root=>{
+          for(const e of all(root,'*')) {
+            if(e.tagName.toLowerCase()==='svg')ink(e,'icon');
+            else if(e.closest('svg'))continue;
+            else if(e.matches('input,textarea')||Array.from(e.childNodes).some(n=>n.nodeType===3&&n.length))ink(e);
+          }
+        };
+        const LINES=['rgb(229, 231, 235)','rgb(209, 213, 219)'];
+        // strict: supplement older-style families, touching only elements of the shared components that the
+        // older code has not already slotted.
+        const c26Surfaces=(region,strict=false)=>{
+          for(const e of all(region,'*')) {
+            if(e.closest('svg'))continue;
+            if(strict&&(slotted.has(e)||!e.closest('[data-slot],[role="tablist"],[role="tab"],[data-scope="c26-foundation"]')))continue;
+            const bg=paintValue(e,'backgroundColor'),light=[...LIGHT,'rgb(249, 250, 251)'].includes(bg);
+            if(badge(e)){}
+            else if(e.matches('[data-slot="card"]')&&light)paint(e,'panel',[...LIGHT,'rgb(249, 250, 251)']);
+            else if(e.matches('[role="banner"]')&&light)paint(e,'shell',[...LIGHT,'rgb(249, 250, 251)']);
+            else if(e.matches('[role="columnheader"],th')&&['rgb(243, 244, 246)','rgb(229, 231, 235)'].includes(bg))paint(e,'c26-head',[bg]);
+            else if(e.matches('[role="tablist"]')&&bg!==TRANSPARENT&&(light||HOVER.includes(bg)))paint(e,'c26-head',[bg]);
+            else if(e.matches('[data-slot="input-group"],[data-slot="select-trigger"],[data-slot="popover-trigger"],[role="radiogroup"],textarea,select,input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([data-slot="input-group-control"])')&&light)paint(e,'c26-field',[...LIGHT,'rgb(249, 250, 251)']);
+            else if(e.matches('button,a')&&bg==='rgb(18, 107, 206)'&&paint(e,'primary',[bg])) {
+              if(ownText(e))plan(e,'data-cg-text','on-button');
+            }
+            else if(e.matches('button,a')&&bg==='rgb(227, 41, 38)'&&paint(e,'c26-badge-err',[bg])) {
+              if(ownText(e))plan(e,'data-cg-text','on-button');
+            }
+            else if(e.matches('[data-slot="panel-root"]')&&getComputedStyle(e).backgroundImage.startsWith('radial-gradient')) {
+              slot(e,'c26-nogradient');planned.add(e);
+            }
+            else if(e.matches('button,[role="tab"],[role="radio"],a[role="link"],[role="row"] a,tr,[role="row"]')&&(light||HOVER.includes(bg))) {
+              const chosen=bg!==TRANSPARENT&&(!light&&e.matches('[role="tab"],[role="radio"],button[data-state="on"],button[data-active="true"],[aria-selected="true"],[aria-current="true"]')||e.matches('[role="tab"][data-state="active"]')&&!!e.parentElement?.matches('[role="tablist"][data-variant="contained"]'));
+              paint(e,chosen?'c26-selected':'c26-row',[...HOVER,...LIGHT]);
+            }
+            else if(strict&&e.matches('[data-scope="c26-foundation"]')&&light){if(surface(e,'c26-clear',[...LIGHT,'rgb(249, 250, 251)']))cleared.add(e);}
+            else if(strict){}
+            else if(e.matches('main,[data-scope$="-microfrontend"]')&&light)paint(e,'canvas',[...LIGHT,'rgb(249, 250, 251)']);
+            else if(lightTint(bg)&&e.matches('div,section,aside,header,li,ul'))paint(e,'c26-head',[bg]);
+            else if(light&&e.matches('div,section,header,nav,ul,li,table,thead,tbody,tfoot,tr,td,h1,h2,h3,h4,h5,h6,form,fieldset,aside,article,footer,dl,dt,dd'))if(surface(e,'c26-clear',[...LIGHT,'rgb(249, 250, 251)']))cleared.add(e);
+            const st=getComputedStyle(e);
+            if(!strict&&!e.matches('[data-slot="card"],[role="banner"]')&&['Top','Right','Bottom','Left'].some(side=>parseFloat(st['border'+side+'Width'])>0&&LINES.includes(paintValue(e,'border'+side+'Color'))))slot(e,'c26-line');
+          }
+        };
+        c26Run=r=>c26Surfaces(r,true);
+        const sideScope=unique(layout,'[data-scope="sidebar-microfrontend"]');
+        const side=sideScope&&unique(sideScope,'[data-slot="sidebar-container"] > [data-slot="sidebar-inner"][data-sidebar="sidebar"]');
+        if(owns&&sideScope&&side&&unique(side,'[data-slot="sidebar-header"]')&&unique(side,'[data-slot="sidebar-content"]')&&unique(side,'[data-slot="sidebar-footer"]')) {
+          boundaries.push([sideScope,family]);
+          if(!paint(sideScope,'shell')||!paint(side,'shell'))rejected.add(family);
+          if(getComputedStyle(side.parentElement).borderRightColor==='rgb(229, 231, 235)')slot(side.parentElement,'rail-boundary');
+          all(side,'[data-slot="sidebar-menu-button"],[data-slot="sidebar-menu-sub-button"],[data-slot="button"]').forEach(e=>paint(e,'c26-nav',HOVER));
+          all(side,'[data-slot$="badge"]').forEach(badge);
+          all(side,'[data-slot="sidebar-separator"]').forEach(e=>paint(e,'c26-sep',['rgb(209, 213, 219)']));
+          walk(side);
+        }
+        const toolScope=unique(layout,'[data-scope="global-toolbar-microfrontend"]');
+        const toolInner=toolScope&&unique(toolScope,':scope > div');
+        if(owns&&toolScope&&toolInner) {
+          if(!paint(toolScope,'shell')||!paint(toolInner,'shell'))rejected.add(family);
+          // The AI Assist label is native gradient ink; only the labelled icon buttons are repainted.
+          for(const b of all(toolScope,'button[aria-label][data-slot],a[aria-label][data-slot="button"]')) {
+            boundaries.push([b,family]);paint(b,'c26-nav',HOVER);walk(b);
+          }
+        }
+        const headerRoot=unique(layout,'#main-content-toolbar-root');
+        const logoScope=headerRoot&&unique(headerRoot,':scope > [data-scope]');
+        if(owns&&logoScope&&paint(logoScope,'shell')) {
+          const bar=headerRoot.parentElement?.parentElement;
+          if(bar&&getComputedStyle(bar).borderBottomColor==='rgb(229, 231, 235)')slot(bar,'c26-header-line');
+          all(logoScope,'div').forEach(e=>{if(LIGHT.includes(paintValue(e,'backgroundColor')))paint(e,'shell');});
+          all(logoScope,'svg[role="img"]').forEach(mono);
+          all(logoScope,'[data-slot$="badge"]').forEach(badge);
+          boundaries.push([logoScope,family]);walk(logoScope);
+        }
+        if(owns&&indexRoute) {
+          const pageScope=unique(layout,'main [data-scope="project-overview-microfrontend"]');
+          const page=pageScope&&unique(pageScope,':scope > div');
+          const content=pageScope&&unique(pageScope,'#mainContent');
+          const projects=pageScope&&unique(pageScope,'nav[aria-label="Projects"]');
+          if(pageScope&&page&&content&&projects&&unique(content,'h1')&&content.querySelector('[data-slot="card"]')) {
+            boundaries.push([pageScope,family]);
+            if(!paint(pageScope,'canvas')||!paint(page,'canvas',[...LIGHT,'rgb(249, 250, 251)'])||!paint(projects,'shell'))rejected.add(family);
+            if(getComputedStyle(projects).borderRightColor==='rgb(229, 231, 235)')slot(projects,'rail-boundary');
+            all(pageScope,'[data-slot="card"]').forEach(e=>{if(!paint(e,'panel'))rejected.add(family);});
+            all(pageScope,'[data-slot="input-group"]').forEach(e=>paint(e,'c26-field'));
+            all(pageScope,'[data-slot="button"]').forEach(e=>paint(e,'c26-nav',HOVER));
+            all(pageScope,'ul[aria-label="All projects"] > li,[data-slot="card-content"] ul > li > a').forEach(e=>paint(e,'c26-row',HOVER));
+            all(pageScope,':scope > div > a[href="#mainContent"]').forEach(e=>paint(e,'panel'));
+            walk(pageScope);
+          } else rejected.add(family);
+        }
+        // Project pages built from the shared shadcn components. Every known light surface in <main>
+        // is repainted and every text leaf must carry known ink, otherwise the page stays native.
+        family='c26-page';
+        if(enabled(family)&&c26Page) {
+          // Pages nest <main id="mainContent"> inside the layout's own <main>; the outer one is the root.
+          const mains=layout.querySelectorAll('main'),main=mains.length&&mains.length<=2?mains[0]:null;
+          if(main&&main.querySelector('[data-scope]')) {
+            boundaries.push([main,family]);
+            c26Surfaces(main);
+            walk(main);
+          }
+          // Create / edit side panel of the module pages (a Paper outside <main>).
+          const sidePanel=unique(app,'#editSidebarWrapper[data-test="EditSidebar"][role="region"][aria-labelledby="editSidebarTitle"]');
+          if(sidePanel&&unique(sidePanel,'#editSidebarTitle')) {
+            boundaries.push([sidePanel,family]);
+            if(paint(sidePanel,'panel'))slot(sidePanel,'c26-line');else rejected.add(family);
+            c26Surfaces(sidePanel);
+            walk(sidePanel);
+          }
+        }
+        // Chat panels of the unified layout: the interaction panel and the AI Assist side panel.
+        family='chat';
+        if(enabled(family)) {
+          for(const [host,scope] of [['aside#interactionPanel','[data-scope="interaction-panel-microfrontend"]'],['aside[data-platform-agent-root]:not([data-platform-agent-view="closed"])','[data-scope="platform-agent-microfrontend"]']]) {
+            const aside=unique(app,host),sc=aside&&unique(aside,scope);
+            if(!sc)continue;
+            boundaries.push([sc,family]);
+            if(!paint(sc,'panel',[...LIGHT,TRANSPARENT]))rejected.add(family);
+            c26Surfaces(sc);
+            walk(sc);
+          }
+        }
+        // Radix popover / dropdown portals of the unified layout.
+        family='global';
+        if(enabled(family)) for(const wrap of doc.querySelectorAll('[data-radix-popper-content-wrapper]')) {
+          const pop=wrap.children.length===1?wrap.firstElementChild:null;
+          if(!pop||!pop.matches('[data-slot="popover-content"],[data-slot="dropdown-menu-content"],[data-slot="select-content"]'))continue;
+          boundaries.push([pop,family]);plan(wrap,'data-cg-owner',family);
+          if(!paint(pop,'overlay'))rejected.add(family);
+          c26Surfaces(pop);
+          all(pop,'button,[role="menuitem"],[role="option"]').forEach(e=>{
+            if(paintValue(e,'backgroundColor')==='rgb(210, 231, 254)')paint(e,'c26-selected',['rgb(210, 231, 254)']);
+            else paint(e,'c26-row',HOVER);
+          });
+          all(pop,'[data-slot="separator"],[data-slot="dropdown-menu-separator"],[role="separator"],[role="none"]').forEach(e=>paint(e,'c26-sep',['rgb(229, 231, 235)','rgb(209, 213, 219)']));
+          walk(pop);
+        }
+        // Radix dialogs (confirmations, wizards). The overlay stays native; only the dialog surface is repainted.
+        if(enabled(family)) for(const dlg of all(doc,'[role="dialog"][data-slot$="dialog-content"],[role="alertdialog"][data-slot$="dialog-content"]')) {
+          const host=dlg.closest('[data-scope]');
+          boundaries.push([dlg,family]);if(host)plan(host,'data-cg-owner',family);
+          if(!paint(dlg,'overlay'))rejected.add(family);
+          slot(dlg,'c26-line');
+          c26Surfaces(dlg);
+          walk(dlg);
+        }
+      }
       }
       if(!workspaceRoute) {
       const nav=unique(app,'.SIDEBAR_WRAPPER nav');
@@ -1612,20 +1818,22 @@
       family='chart';
       if(enabled(family)&&flowRoute==='chart'&&chart && chart.closest('#flowChartEditorTabContent')) {
         const paths=all(chart,':scope > svg > path');
-        const connectorsSafe=paths.length>0&&paths.every(e=>{const g=getComputedStyle(e);return g.fill==='none'&&g.stroke==='rgb(234, 234, 234)';});
-        if(connectorsSafe && surface(chart,'canvas',['rgb(249, 249, 254)'])) {
+        const connectorsSafe=paths.length>0&&paths.every(e=>{const g=getComputedStyle(e);return g.fill==='none'&&['rgb(234, 234, 234)','rgb(156, 163, 175)'].includes(g.stroke);});
+        if(connectorsSafe && surface(chart,'canvas',['rgb(249, 249, 254)','rgb(249, 250, 251)'])) {
           boundaries.push([chart,family]);
           applied++;
-          const page=chart.closest('.chart');if(page)surface(page,'canvas',['rgb(249, 249, 254)']);
+          const page=chart.closest('.chart');if(page)surface(page,'canvas',['rgb(249, 249, 254)','rgb(245, 249, 254)']);
           all(chart,':scope > svg > path').forEach(e=>{
             const g=getComputedStyle(e);
-            if(g.fill==='none'&&g.stroke==='rgb(234, 234, 234)')slot(e,'connector');else partial=true;
+            if(g.fill==='none'&&['rgb(234, 234, 234)','rgb(156, 163, 175)'].includes(g.stroke))slot(e,'connector');else partial=true;
           });
           all(chart,'.chartNode-normal').forEach(face=>{
             const wrapper=face.closest('.chartNode[role="button"]');
             if(!wrapper||!face.querySelector('[id^="nodeLabelFor-"]')) {partial=true;return;}
             if(surface(face,'node',['rgb(255, 255, 255)'])) {
               componentText(face);slot(wrapper,'node-owner');
+              // The unified layout paints plain wrappers inside nodes white; let the node surface show through.
+              all(face,'div').forEach(d=>{if(!d.matches('[class*="MuiInputBase"]'))surface(d,'c26-clear',['rgb(255, 255, 255)']);});
               // Native preview text has .55 opacity. White composites to 5.08:1.
               all(face,'div:has(> [id^="nodeLabelFor-"]) + div > div > div').forEach(e=>text(e,'on-button'));
               all(face,':scope > div:first-child > div').forEach(e=>{
@@ -1644,6 +1852,11 @@
             const img=face.querySelector(':scope > img[alt="AI Agent Avatar"]');
             const wrapper=face.closest('.chartNode[role="button"]');
             const g=getComputedStyle(face);
+            if(face.matches('.ai-agent-node-c26')&&wrapper&&g.backgroundImage==='none'&&surface(face,'node',['rgb(255, 255, 255)'])) {
+              slot(wrapper,'node-owner');
+              all(face,'div').forEach(d=>surface(d,'c26-clear',['rgb(255, 255, 255)']));
+              return;
+            }
             if(!img||!wrapper||g.backgroundImage!==AGENT_GRADIENT||g.boxShadow!==AGENT_SHADOW||
                 !['rgb(229, 242, 255)','rgb(61, 159, 255)'].includes(g.borderTopColor)) {partial=true;return;}
             slot(face,'agent');slot(wrapper,'agent-owner');componentText(face);
@@ -1656,6 +1869,18 @@
               all(toolbar,':scope > button, :scope > p, button > .MuiSvgIcon-root').forEach(e=>text(e,'icon'));
             }
           });
+          if(doc.querySelector('[data-unified-layout-root]')) {
+            all(chart,'button[aria-label^="Add "]').forEach(e=>{if(surface(e,'c26-plus',['rgb(255, 255, 255)']))text(e,'icon');});
+            for(const e of all(chartPanel,'div,button')) {
+              if(chart.contains(e)||e.closest('.chartNode'))continue;
+              const bg=paintValue(e,'backgroundColor'),st=getComputedStyle(e);
+              if(bg==='rgb(229, 231, 235)'&&e.tagName==='DIV')surface(e,'c26-sep',['rgb(229, 231, 235)']);
+              else if(bg==='rgb(255, 255, 255)'&&e.tagName==='DIV'&&parseFloat(st.borderTopWidth)>0){if(surface(e,'toolbar',['rgb(255, 255, 255)']))slot(e,'c26-line');}
+              else if(bg==='rgb(255, 255, 255)'&&e.tagName==='BUTTON'){if(surface(e,'c26-row',['rgb(255, 255, 255)']))slot(e,'c26-line');}
+              else if(bg==='rgb(255, 255, 255)'&&e.tagName==='DIV')surface(e,'c26-clear',['rgb(255, 255, 255)']);
+            }
+            c26roots.push([chartPanel,family]);
+          }
           // The native history group wraps each icon button in a tooltip span.
           for(const toolbar of all(chartPanel,':scope > div:has(> span > button[aria-label="Undo"])')) {
             const buttons=Array.from(toolbar.querySelectorAll(':scope > span > button.MuiIconButton-root'));
@@ -1916,6 +2141,28 @@
       partial=true;
       }
     }
+    // Unified-layout components inside old-style families carry no Mui classes. Map their text leaves and
+    // icons, but only where the nearest opaque surface is one of ours; native opaque chips keep their ink.
+    for(const [root,owner] of c26roots) {
+      const prev=family;family=owner;
+      if(c26Run)c26Run(root);
+      const onDark=el=>{
+        for(let p=el;p;p=p.parentElement) {
+          if(slotted.has(p))return true;
+          if(/^rgb\(/.test(paintValue(p,'backgroundColor'))||getComputedStyle(p).backgroundImage!=='none')return false;
+        }
+        return false;
+      };
+      for(const e of all(root,'*')) {
+        if(texted.has(e))continue;
+        if(e.tagName.toLowerCase()==='svg'){if(onDark(e))text(e,'icon');}
+        else if(e.closest('svg'))continue;
+        else if((e.matches('input,textarea')||Array.from(e.childNodes).some(n=>n.nodeType===3&&n.length))&&onDark(e)) {
+          if(paintValue(e,'color')==='rgb(227, 41, 38)')plan(e,'data-cg-text','error');else text(e);
+        }
+      }
+      family=prev;
+    }
     // Each element can have several paint slots; keep token ownership explicit.
     const combined=new Map();
     for(const [el,attr,value,owner] of plans) {
@@ -1965,7 +2212,7 @@
         const context=contextFor(e);
         if(context.island)covered=context.opaque&&!mappedInk&&!context.ink&&!mappedFill;
         if(!covered) {
-          if(!refusalSites.has(owner))refusalSites.set(owner,'text:'+e.tagName.toLowerCase()+(e.id?'#'+e.id:'')+'.'+[...e.classList].filter(c=>!/^jss/.test(c)).slice(0,3).join('.'));
+          if(!refusalSites.has(owner))refusalSites.set(owner,'text:'+e.tagName.toLowerCase()+(e.id?'#'+e.id:'')+'.'+[...e.classList].filter(c=>!/^jss/.test(c)).slice(0,3).join('.')+' c='+paintValue(e,'color')+' in='+(e.closest('[data-slot]')?.getAttribute('data-slot')||e.parentElement?.tagName.toLowerCase()||''));
           failed.add(owner);break;
         }
       }
